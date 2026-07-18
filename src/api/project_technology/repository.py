@@ -1,0 +1,33 @@
+from sqlalchemy import delete as sqla_delete, insert
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.models.models import ProjectTechnology
+
+
+async def create_by_project(db: AsyncSession, id_project: int, ids: list[int]) -> None:
+  if not ids:
+    return
+  await db.execute(
+    insert(ProjectTechnology),
+    [{"id_project": id_project, "id_technology": tid} for tid in ids],
+  )
+  await db.commit()
+
+
+async def delete_by_project(db: AsyncSession, id_project: int) -> None:
+  stmt = sqla_delete(ProjectTechnology).where(ProjectTechnology.id_project == id_project)
+  await db.execute(stmt)
+  await db.commit()
+
+
+async def delete(db: AsyncSession, id_project: int, id_technology: int) -> bool:
+  stmt = (
+    sqla_delete(ProjectTechnology)
+    .where(
+      ProjectTechnology.id_project == id_project,
+      ProjectTechnology.id_technology == id_technology,
+    )
+  )
+  result = await db.execute(stmt)
+  await db.commit()
+  return result.rowcount > 0
