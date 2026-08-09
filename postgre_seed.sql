@@ -172,9 +172,9 @@ INSERT INTO pf_url (name, link, is_enabled, id_urlgrp) VALUES
 ('NextAuth', 'https://next-auth.js.org', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Development Platforms')),
 ('PlayCode', 'https://playcode.io', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Development Platforms')),
 ('CodePen', 'https://codepen.io', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Development Platforms')),
-('DbDiagram', 'https://dbdiagram.io/home', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Development Platforms')), 
-('Draw.io', 'https://app.diagrams.net', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Development Platforms')),
-('Excalidraw', 'https://excalidraw.com', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Development Platforms')),
+('DbDiagram', 'https://dbdiagram.io/home', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Design & Assets')),
+('Draw.io', 'https://app.diagrams.net', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Design & Assets')),
+('Excalidraw', 'https://excalidraw.com', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Design & Assets')),
 ('MapBox', 'https://www.mapbox.com', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Development Platforms')),
 ('PublicAPI', 'https://publicapi.dev', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Development Platforms')),
 ('Songsterr', 'https://www.songsterr.com', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Personal Links')),
@@ -182,6 +182,7 @@ INSERT INTO pf_url (name, link, is_enabled, id_urlgrp) VALUES
 ('VueJS', 'https://vuejs.org', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Frontend')),
 ('VueUse', 'https://vueuse.org', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Frontend')),
 ('NextJS', 'https://nextjs.org', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Frontend')),
+('Tailwind Animations', 'https://tailwind-animations.com', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Frontend')),
 ('Tailwind CSS', 'https://tailwindcss.com', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Frontend')),
 ('DaisyUI', 'https://daisyui.com', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Frontend')),
 ('Flowbite', 'https://flowbite.com', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Frontend')),
@@ -197,6 +198,7 @@ INSERT INTO pf_url (name, link, is_enabled, id_urlgrp) VALUES
 ('Java JDK', 'https://www.oracle.com/cl/java/technologies/downloads', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Backend')),
 
 ('ChatGPT', 'https://chat.openai.com', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'AI / LLM Tools')),
+('Mixboard', 'https://mixboard.google.com/projects', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'AI / LLM Tools')),
 ('Claude', 'https://claude.ai', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'AI / LLM Tools')),
 ('Google Gemini', 'https://gemini.google.com', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'AI / LLM Tools')),
 ('Leonardo AI', 'https://leonardo.ai', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'AI / LLM Tools')),
@@ -226,10 +228,18 @@ INSERT INTO pf_url (name, link, is_enabled, id_urlgrp) VALUES
 ('Railway', 'https://railway.app', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Infrastructure / Hosting')),
 ('Fly.io', 'https://fly.io', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Infrastructure / Hosting')),
 ('Free ASP hosting', 'https://freeasphosting.net', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Infrastructure / Hosting')),
+('Linode', 'https://www.linode.com/', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Infrastructure / Hosting')),
+('Azure DevOps', 'https://azure.microsoft.com/en-us/products/devops', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Infrastructure / Hosting')),
+('Oracle Cloud', 'https://www.oracle.com/cloud/free', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Infrastructure / Hosting')),
+('AWS', 'https://www.awsacademy.com/vforcesite/LMS_Login', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Infrastructure / Hosting')),
 
 ('Figma', 'https://www.figma.com', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Design & Assets')),
 ('Canva', 'https://www.canva.com', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Design & Assets')),
 ('Unsplash', 'https://unsplash.com', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Design & Assets')),
+('Softicons', 'https://www.softicons.com', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Design & Assets')),
+('Pixilart', 'https://www.pixilart.com', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Design & Assets')),
+('Pixler', 'https://pixler.dev/', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Design & Assets')),
+('Universal LPC Spritesheet', 'https://liberatedpixelcup.github.io/Universal-LPC-Spritesheet-Character-Generator', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Design & Assets')),
 ('Freepik', 'https://www.freepik.com', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Design & Assets')),
 ('Pixabay', 'https://pixabay.com', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Design & Assets')),
 ('Iconify', 'https://iconify.design', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Design & Assets')),
@@ -242,9 +252,10 @@ INSERT INTO pf_url (name, link, is_enabled, id_urlgrp) VALUES
 ('Asana', 'https://asana.com', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Productivity & Collaboration')),
 
 ('AnimeFLV', 'https://www3.animeflv.net', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Personal Links')),
-('Elden Ring Map', 'https://mapgenie.io/elden-ring/maps/the-lands-between', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Personal Links')),
 ('GetOnbrd', 'https://www.getonbrd.com/misempleos', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Personal Links')),
 ('ChileBT', 'https://chilebt.com', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Personal Links')),
+('YarrList', 'https://yarrlist.net', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Personal Links')),
+('UpWork', 'https://www.upwork.com/', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Personal Links')),
 ('Futbol Libre', 'https://futbollibre.mx', TRUE, (SELECT id_urlgrp FROM pf_urlgrp WHERE name = 'Personal Links'))
 ON CONFLICT DO NOTHING;
 
@@ -260,10 +271,10 @@ ON CONFLICT DO NOTHING;
 -- Sincronizar secuencias: si el último ID es 14, el próximo INSERT generará 15.
 -- No es necesario tras DROP+CREATE desde cero, pero previene errores si se
 -- ejecuta un INSERT manual después del seed (ej: prueba local).
-SELECT setval('pf_projects_id_project_seq', (SELECT MAX(id_project) FROM pf_projects));
-SELECT setval('pf_languages_id_language_seq', (SELECT MAX(id_language) FROM pf_languages));
-SELECT setval('pf_technologies_id_technology_seq', (SELECT MAX(id_technology) FROM pf_technologies));
-SELECT setval('pf_urlgrp_id_urlgrp_seq', (SELECT MAX(id_urlgrp) FROM pf_urlgrp));
-SELECT setval('pf_url_id_url_seq', (SELECT MAX(id_url) FROM pf_url));
+--SELECT setval('pf_projects_id_project_seq', (SELECT MAX(id_project) FROM pf_projects));
+--SELECT setval('pf_languages_id_language_seq', (SELECT MAX(id_language) FROM pf_languages));
+--SELECT setval('pf_technologies_id_technology_seq', (SELECT MAX(id_technology) FROM pf_technologies));
+--SELECT setval('pf_urlgrp_id_urlgrp_seq', (SELECT MAX(id_urlgrp) FROM pf_urlgrp));
+--SELECT setval('pf_url_id_url_seq', (SELECT MAX(id_url) FROM pf_url));
 
 COMMIT;
