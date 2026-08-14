@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.exceptions import DuplicateNameError
+from src.core.exceptions import DuplicateNameError, NotFoundError
 from src.schemas import dtos
 
 from . import repository
@@ -23,10 +23,10 @@ async def get_all_with_urls(db: AsyncSession) -> list[dtos.UrlGrpDetailResponse]
   return [dtos.UrlGrpDetailResponse.model_validate(e) for e in entities]
 
 
-async def get_by_id(db: AsyncSession, id: int) -> dtos.UrlGrpResponse | None:
+async def get_by_id(db: AsyncSession, id: int) -> dtos.UrlGrpResponse:
   entity = await repository.get_by_id(db, id)
   if not entity:
-    return None
+    raise NotFoundError("UrlGrp")
   return dtos.UrlGrpResponse.model_validate(entity)
 
 
@@ -37,19 +37,18 @@ async def create(db: AsyncSession, data: dtos.UrlGrpRequest) -> dtos.UrlGrpRespo
   return dtos.UrlGrpResponse.model_validate(entity)
 
 
-async def update(db: AsyncSession, id: int, data: dtos.UrlGrpRequest) -> dtos.UrlGrpResponse | None:
+async def update(db: AsyncSession, id: int, data: dtos.UrlGrpRequest) -> dtos.UrlGrpResponse:
   entity = await repository.get_by_id(db, id)
   if not entity:
-    return None
+    raise NotFoundError("UrlGrp")
   if await repository.exists_by_name(db, data.name, exclude_id=id):
     raise DuplicateNameError(data.name)
   entity = await repository.update(db, entity, data.model_dump(exclude_unset=True))
   return dtos.UrlGrpResponse.model_validate(entity)
 
 
-async def delete(db: AsyncSession, id: int) -> bool:
+async def delete(db: AsyncSession, id: int) -> None:
   entity = await repository.get_by_id(db, id)
   if not entity:
-    return False
+    raise NotFoundError("UrlGrp")
   await repository.delete(db, entity)
-  return True

@@ -4,6 +4,7 @@
 [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 ```sh
 .venv\Scripts\activate
+py repopulate_db.py   # puebla la BD (schema + seed) usando DATABASE_URL del .env
 py run.py
 # or 
 uvicorn src.main:app --reload
@@ -23,12 +24,19 @@ py run.py               # python3 run.py
 python.exe -m pip install --upgrade pip
 ```
 ```sh
-pip install fastapi uvicorn[standard] sqlalchemy asyncpg greenlet python-dotenv pydantic pydantic-settings
-pip install google-auth google-auth-oauthlib google-auth-httplib2
-pip install pydantic[email]
-pip install python-jose[cryptography]
+# Web framework y servidor
+pip install fastapi uvicorn[standard]
+# ORM y base de datos
+pip install sqlalchemy asyncpg greenlet
+# Configuración y validación
+pip install python-dotenv pydantic pydantic-settings
+# Rate limiting
 pip install slowapi
+# Errores estandarizados RFC 9457 (Problem Details)
+pip install fastapi-problem rfc9457
+# Parseo de formularios multipart (subida de archivos)
 pip install python-multipart
+# Almacenamiento de imágenes en Cloudinary
 pip install cloudinary
 ```
 ### 3. (Opcional) Dependencias de test
@@ -49,12 +57,21 @@ pip install -r requirements.txt
 ### 4. Configurar variables de entorno
 Crear archivo `.env` basado en `.env_demo`:
 ```sh
-cp .env_example .env
+cp .env_demo .env
 ```
 
 ### 5. Generar SECRET_KEY
 ```sh
 python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+### 6. Poblar / reconstruir la base de datos
+`repopulate_db.py` aplica `postgre_schema.sql` (esquema) y `postgre_seed.sql` (datos iniciales) a la BD definida en `.env`:
+
+```sh
+python repopulate_db.py            # aplica schema + seed (idempotente)
+python repopulate_db.py --force    # DROP + CREATE de la BD y luego aplica schema + seed
+python repopulate_db.py --test     # usa TEST_DATABASE_URL en lugar de DATABASE_URL
 ```
 
 ---
@@ -77,7 +94,7 @@ portfolio-python/
 │   │   ├── config.py           → Pydantic settings (env vars)
 │   │   ├── database.py         → SQLAlchemy engine + async session
 │   │   ├── dependencies.py     → DI: get_db, verify_api_key
-│   │   ├── exceptions.py       → AppError base
+│   │   ├── exceptions.py       → Errores de dominio basados en RFC 9457
 │   │   ├── limiter.py          → slowapi rate limiter
 │   │   ├── logger.py           → Logging estructurado con request_id
 │   │   ├── cloudinary.py       → Cloudinary client
@@ -93,6 +110,7 @@ portfolio-python/
 │       ├── url_grp/            → routes, service, repository
 │       └── url/                → routes, service, repository
 ├── tests/                      → Pytest + TestClient async
+├── repopulate_db.py            → Reconstruye la BD desde los .sql
 ├── pytest.ini
 ├── run.py
 └── vercel.json
@@ -105,6 +123,7 @@ portfolio-python/
 | **DB** | PostgreSQL 16 |
 | **Auth** | API Key via `X-API-Key` header |
 | **Rate Limiting** | slowapi |
+| **Errores** | RFC 9457 via fastapi-problem + rfc9457 |
 | **Image Hosting** | Cloudinary |
 | **Testing** | pytest + pytest-asyncio + httpx
 

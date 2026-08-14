@@ -1,4 +1,3 @@
-from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core import image as image_service
@@ -17,10 +16,10 @@ async def get_all(db: AsyncSession, page: int = 1, limit: int = 20, search: str 
   return dtos.PaginationResponse(page=page, limit=limit, total=total, items=items)
 
 
-async def get_by_id(db: AsyncSession, id: int) -> dtos.TechnologyResponse | None:
+async def get_by_id(db: AsyncSession, id: int) -> dtos.TechnologyResponse:
   entity = await repository.get_by_id(db, id)
   if not entity:
-    return None
+    raise NotFoundError("Technology")
   return dtos.TechnologyResponse.model_validate(entity)
 
 
@@ -31,42 +30,40 @@ async def create(db: AsyncSession, data: dtos.TechnologyRequest) -> dtos.Technol
   return dtos.TechnologyResponse.model_validate(entity)
 
 
-async def update(db: AsyncSession, id: int, data: dtos.TechnologyRequest) -> dtos.TechnologyResponse | None:
+async def update(db: AsyncSession, id: int, data: dtos.TechnologyRequest) -> dtos.TechnologyResponse:
   entity = await repository.get_by_id(db, id)
   if not entity:
-    return None
+    raise NotFoundError("Technology")
   if await repository.exists_by_name(db, data.name, exclude_id=id):
     raise DuplicateNameError(data.name)
   entity = await repository.update(db, entity, data.model_dump(exclude_unset=True))
   return dtos.TechnologyResponse.model_validate(entity)
 
 
-async def delete(db: AsyncSession, id: int) -> bool:
+async def delete(db: AsyncSession, id: int) -> None:
   entity = await repository.get_by_id(db, id)
   if not entity:
-    return False
+    raise NotFoundError("Technology")
   if entity.img_url:
     image_service.delete_image_by_url(entity.img_url)
   await repository.delete(db, entity)
-  return True
 
 
-async def upload_image(db: AsyncSession, id: int, file: UploadFile) -> dtos.TechnologyResponse | None:
+async def upload_image(db: AsyncSession, id: int, file_bytes: bytes) -> dtos.TechnologyResponse:
   entity = await repository.get_by_id(db, id)
   if not entity:
-    return None
+    raise NotFoundError("Technology")
   if entity.img_url:
     image_service.delete_image_by_url(entity.img_url)
-  url = image_service.upload_image_1_1(PATH, file)
+  url = image_service.upload_image_1_1(PATH, file_bytes)
   entity = await repository.update(db, entity, {"img_url": url})
   return dtos.TechnologyResponse.model_validate(entity)
 
 
-async def delete_image(db: AsyncSession, id: int) -> bool:
+async def delete_image(db: AsyncSession, id: int) -> None:
   entity = await repository.get_by_id(db, id)
   if not entity:
-    return False
+    raise NotFoundError("Technology")
   if entity.img_url:
     image_service.delete_image_by_url(entity.img_url)
   await repository.update(db, entity, {"img_url": None})
-  return True

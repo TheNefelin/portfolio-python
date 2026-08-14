@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.exceptions import DuplicateNameError
+from src.core.exceptions import DuplicateNameError, NotFoundError
 from src.schemas import dtos
 
 from . import repository
@@ -17,10 +17,10 @@ async def get_all(db: AsyncSession, page: int = 1, limit: int = 20, search: str 
   return dtos.PaginationResponse(page=page, limit=limit, total=total, items=items)
 
 
-async def get_by_id(db: AsyncSession, id: int) -> dtos.UrlResponse | None:
+async def get_by_id(db: AsyncSession, id: int) -> dtos.UrlResponse:
   entity = await repository.get_by_id(db, id)
   if not entity:
-    return None
+    raise NotFoundError("Url")
   return dtos.UrlResponse.model_validate(entity)
 
 
@@ -31,19 +31,18 @@ async def create(db: AsyncSession, data: dtos.UrlRequest) -> dtos.UrlResponse:
   return dtos.UrlResponse.model_validate(entity)
 
 
-async def update(db: AsyncSession, id: int, data: dtos.UrlRequest) -> dtos.UrlResponse | None:
+async def update(db: AsyncSession, id: int, data: dtos.UrlRequest) -> dtos.UrlResponse:
   entity = await repository.get_by_id(db, id)
   if not entity:
-    return None
+    raise NotFoundError("Url")
   if await repository.exists_by_name(db, data.name, exclude_id=id):
     raise DuplicateNameError(data.name)
   entity = await repository.update(db, entity, data.model_dump(exclude_unset=True))
   return dtos.UrlResponse.model_validate(entity)
 
 
-async def delete(db: AsyncSession, id: int) -> bool:
+async def delete(db: AsyncSession, id: int) -> None:
   entity = await repository.get_by_id(db, id)
   if not entity:
-    return False
+    raise NotFoundError("Url")
   await repository.delete(db, entity)
-  return True

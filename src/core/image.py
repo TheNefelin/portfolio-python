@@ -1,5 +1,3 @@
-from fastapi import UploadFile
-
 from src.core.cloudinary import (
   delete_image as cloudinary_delete_image,
   extract_public_id,
@@ -8,10 +6,10 @@ from src.core.cloudinary import (
 )
 
 
-def upload_image_1_1(path: str, file: UploadFile) -> str:
+def upload_image_1_1(folder: str, file_bytes: bytes) -> str:
   public_id = None
   try:
-    url, public_id = cloudinary_upload_1_1(file_bytes=file.file.read(), folder=path)
+    url, public_id = cloudinary_upload_1_1(file_bytes=file_bytes, folder=folder)
     return url
   except Exception as e:
     if public_id:
@@ -22,10 +20,10 @@ def upload_image_1_1(path: str, file: UploadFile) -> str:
     raise e
 
 
-def upload_image_16_9(path: str, file: UploadFile) -> str:
+def upload_image_16_9(folder: str, file_bytes: bytes) -> str:
   public_id = None
   try:
-    url, public_id = cloudinary_upload_16_9(file_bytes=file.file.read(), folder=path)
+    url, public_id = cloudinary_upload_16_9(file_bytes=file_bytes, folder=folder)
     return url
   except Exception as e:
     if public_id:
@@ -37,10 +35,7 @@ def upload_image_16_9(path: str, file: UploadFile) -> str:
 
 
 def delete_image_by_url(url: str) -> bool:
-  try:
-    public_id = extract_public_id(url)
-    if public_id:
-      cloudinary_delete_image(public_id)
-    return True
-  except Exception:
+  public_id = extract_public_id(url)
+  if not public_id:
     return False
+  return cloudinary_delete_image(public_id)
