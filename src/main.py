@@ -21,7 +21,7 @@ from src.core.logger import logger, set_request_id
 
 start_time = time.time()
 
-app = FastAPI(title="Portfolio API", description="In development", version="1.0")
+app = FastAPI(title="Portfolio API", description="In production", version="1.1")
 app.state.limiter = limiter
 
 
