@@ -19,3 +19,12 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+
+# agent-baseline: respaldos de instalacion
+.baseline-backup/
+
+# agent-baseline: adaptadores de descubrimiento (generados)
+.agents/skills/
+.clinerules/
+.claude/skills/
+.kilocode/

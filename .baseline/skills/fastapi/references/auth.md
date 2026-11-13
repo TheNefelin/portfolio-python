@@ -2,6 +2,39 @@
 
 Siempre presente en cualquier API: se reutiliza en todos los proyectos. Componentes:
 
+### 8.0 Hashing de contraseñas — usar `pwdlib`, NO `passlib`
+
+> **⚠️ `passlib` está sin mantenimiento (último release 2020) y está ROTO con `bcrypt` ≥ 4.1** (intenta leer `bcrypt.__about__`, eliminado en bcrypt 4.1+, y falla con `ValueError`/`MissingBackendError` incluso con contraseñas cortas). El reemplazo oficial y mantenido —y el que usa la documentación actual de FastAPI— es **`pwdlib`**.
+
+```python
+# src/core/security.py
+from pwdlib import PasswordHash
+from pwdlib.hashers.bcrypt import BcryptHasher
+
+# bcrypt explícito; para argon2id: PasswordHash.recommended() + pwdlib[argon2]
+pwd_context = PasswordHash((BcryptHasher(),))
+
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+```
+
+- **Dependencia:** `pwdlib[bcrypt]` + `bcrypt` (o `pwdlib[argon2]` si se prefiere argon2id).
+- `pwdlib` soporta **rotación de algoritmo** (`verify_and_update`): útil para migrar hashes viejos sin forzar re-login.
+- Cambiar de `passlib` a `pwdlib` **invalida los hashes viejos**; solo migrar con lógica de rehash o si aún no hay usuarios con password.
+
+### 8.0.1 Roles: el enum es el CONTRATO, la BD es el catálogo
+
+Un error común es tener roles en la BD que el código no "conoce" (o al revés): si alguien cambia `'admin'` → `'Admins'` en `user_roles`, el `require_admin` del código deja de pasar y **todos los admins quedan fuera en silencio**.
+
+Dos mitigaciones (usar según criticidad):
+1. **Enum en código como contrato** (`core/roles.py`): `class UserRole(str, Enum): ADMIN = "admin"; USER = "user"`. El código nunca usa strings mágicos (`"admin"`), y el seed del DDL usa **los mismos valores**.
+2. **Validación al arranque (recomendada)**: comprobar que los roles del enum existan en `user_roles`; si no, **abortar el arranque** (`lifespan`) en vez de fallar silenciosamente. Convierte un fallo silencioso (usuario no entra, nadie sabe por qué) en uno ruidoso y claro.
+
+> **Cuándo migrar a permisos (patrón escalable):** si los roles deben crearse **sin deploy** (dinámicos), separar **roles (datos, tabla)** de **permisos (código, enum)** con una tabla `role_permissions`: el código pregunta `user.can("users.delete")`, nunca `role == "admin"`. Es más complejo; solo vale si de verdad hay roles dinámicos, no para un `admin`/`user` fijo.
+
 ### 8.1 `src/core/security.py` — JWT identifica, el rol se lee de la BD
 
 **Punto clave**: el rol embebido en el token es una *pista*, no una autoridad. En cada request protegido se lee el rol real del usuario desde la BD (`users_service.get_role_name_by_id`): un cambio de rol, una baja de usuario o un refresh de permisos se refleja al instante, sin esperar que expire el token (2h).
@@ -73,25 +106,74 @@ def get_current_user(required_roles: Optional[list[str]] = None):
   return _get_user
 ```
 
-### 8.2 `src/core/dependencies.py` (API Key global + roles)
+### 8.2 `src/core/security.py` — Auth + API Key (BFF → API)
+
+**`verify_api_key`** vive en `security.py` (es seguridad, no una "dependency transversal"):
 
 ```python
-from fastapi import Header, Depends
+# src/core/security.py
+import logging
+import secrets
+
+from fastapi import Header
 
 from src.core.config import settings
 from src.core.exceptions import InvalidApiKeyError
-from src.core.security import get_current_user
 
+logger = logging.getLogger("auth-unificado")
 
-async def verify_api_key(x_api_key: str = Header(..., alias="X-API-Key")):
-  if x_api_key != settings.API_KEY:
-    raise InvalidApiKeyError()
-  return True
+async def verify_api_key(x_api_key: str | None = Header(None, alias="X-API-Key")) -> bool:
+    if not x_api_key or not secrets.compare_digest(x_api_key, settings.API_KEY):
+        logger.warning("API Key inválida recibida")
+        raise InvalidApiKeyError()
+    return True
+```
 
+Se aplica a **nivel de router** para que ninguna ruta nueva quede sin proteger:
+
+```python
+# routes.py
+from src.core.security import verify_api_key
+
+router = APIRouter(
+    prefix="/auth",
+    tags=["auth"],
+    dependencies=[Depends(verify_api_key)],  # toda la API exige la Key
+)
+```
+
+`dependencies.py` queda como fachada para que los imports existentes sigan funcionando:
+
+```python
+# src/core/dependencies.py
+from src.core.security import get_current_user, verify_api_key
 
 require_admin = get_current_user(required_roles=["admin"])
 require_user = get_current_user()
 ```
+
+- **Comparación en tiempo constante**: `if not x_api_key or not secrets.compare_digest(x_api_key, settings.API_KEY): raise InvalidApiKeyError()` (evita timing attacks y convierte la ausencia de cabecera en 401, no en 500).
+- **Cabecera opcional en la firma**: `x_api_key: str | None = Header(None, alias="X-API-Key")`; el guardia anterior decide el fallo (401 `invalid-api-key`), no la validación de FastAPI (422, que además expone el nombre del header en el schema público).
+- **`API_KEY` es requerida**: la variable no puede tener default (Pydantic: `API_KEY: str` sin default; implementación propia: un `_required("API_KEY")` que falle al arrancar). Un default vacío permitiría que una clave vacía pasara.
+- **Rutas públicas por diseño**: `/health`, `/docs`, `/openapi.json` quedan fuera del router de auth. Si se necesitan endpoints públicos dentro de `/auth` (ej. login), se sacan a un sub-router separado.
+- **Logging de seguridad**: `logger.warning("API Key inválida recibida")` en cada intento fallido.
+
+### 8.2.1 Logging de eventos de seguridad
+
+Loguear los eventos críticos para detectar ataques:
+
+```python
+# service.py
+logger.warning("Login fallido: usuario no encontrado o inactivo — email=%s", credentials.email)
+logger.warning("Login fallido: contraseña incorrecta — email=%s", credentials.email)
+logger.warning("Google login fallido: token inválido")
+logger.warning("Reuso de refresh token detectado — user_id=%s, sesiones revocadas", session.user_id)
+logger.warning("Reuso concurrente de refresh token — user_id=%s", session.user_id)
+```
+
+- Usar `logger = logging.getLogger("auth-unificado")` (o el nombre del proyecto).
+- `LOG_LEVEL` configurable por `.env` (default `INFO`).
+- No silenciar en producción (a diferencia del frontend, que puede silenciar en dev).
 
 ### 8.3 Flujo de login (Google OAuth) en `src/api/auth/`
 
@@ -180,7 +262,22 @@ async def refresh_session(db, refresh_token):
 > **Refresh token — decisión explícita de seguridad y concurrencia**:
 > - **Almacenar el hash** (`sha256(token)`), nunca el token en claro; declarar `UNIQUE` sobre esa columna.
 > - **Rotación de un solo uso y atómica**: la revocación debe ser condicional (`UPDATE … WHERE revoked = false`); si afecta 0 filas, rechazar.
-> - **Detección de reuso**: si llega un token ya revocado, revocar toda la familia de sesiones del usuario (posible robo).
+> - **Detección de reuso**: si llega un token ya revocado, revocar toda la familia de sesiones del usuario (posible robo). *Trade-off conocido*: un atacante con tokens viejos podría forzar logout del usuario legítimo (DoS); se acepta porque prioriza la protección contra robo (patrón Auth0).
+> - **Expiración absoluta + idle timeout (recomendado)**: la sesión caduca como máximo en `expires_at` (fijo desde el login) **y además** por inactividad, con una columna `last_used_at` que se actualiza en cada uso. Sin idle timeout, un refresh robado puede permanecer válido todo el techo absoluto aunque el usuario real ya no use la app.
+>
+>   ```python
+>   now = datetime.now(tz=timezone.utc)
+>   if session.expires_at <= now:
+>     await session_repository.revoke(db, session)          # techo absoluto
+>     raise UnauthorizedError("Refresh token has expired")
+>   if session.last_used_at <= now - timedelta(minutes=REFRESH_IDLE_MINUTES):
+>     await session_repository.revoke(db, session)          # inactividad
+>     raise UnauthorizedError("Session expired due to inactivity")
+>   if not await session_repository.revoke_if_active(db, session.id):  # reuso concurrente
+>     await session_repository.revoke_all_for_user(db, session.user_id)
+>     raise UnauthorizedError("Refresh token reuse detected; sessions revoked")
+>   ```
+>   El `expires_at` de la rotación **conserva** el techo absoluto original (no se extiende en cada refresh); solo el login fija uno nuevo.
 
 ### 8.4 Endpoints de usuario autenticado
 
