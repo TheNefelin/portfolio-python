@@ -216,5 +216,5 @@ class UserSessionRepository:
   async def soft_delete(self, session: "UserSession") -> "UserSession":
     """Soft delete session (revoke)."""
     session.is_revoked = True
-    await self.db.flush()
+    await self.db.commit()
     return session
