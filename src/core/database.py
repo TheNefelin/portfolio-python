@@ -4,7 +4,7 @@ from sqlalchemy.orm import declarative_base
 from src.core.config import settings
 
 engine = create_async_engine(
-  settings.DATABASE_URL,
+  settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://"),
   echo=settings.DEBUG,
   pool_pre_ping=True,
 )
@@ -21,4 +21,9 @@ Base = declarative_base()
 
 async def get_db():
   async with AsyncSessionLocal() as session:
-    yield session
+    try:
+      yield session
+      await session.commit()
+    except Exception:
+      await session.rollback()
+      raise

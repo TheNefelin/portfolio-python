@@ -4,19 +4,19 @@
 [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 ```sh
 .venv\Scripts\activate
-py repopulate_db.py   # puebla la BD (schema + seed) usando DATABASE_URL del .env
-py run.py
+python repopulate_db.py   # puebla la BD (schema + seed) usando DATABASE_URL del .env
+python run.py
 # or 
 uvicorn src.main:app --reload
 ```
 
 ### 1. Check Python Version & Installed Packages
 ```sh
-py --version            # python3 --version
-py -m pip list          # python3 -m pip list
-py -m venv .venv        # python3 -m venv .venv
+python --version            # python3 --version
+python -m pip list          # python3 -m pip list
+python -m venv .venv        # python3 -m venv .venv
 .venv\Scripts\activate  # source .venv/bin/activate
-py run.py               # python3 run.py
+python run.py               # python3 run.py
 ```
 
 ### 2. Instalar dependencias
@@ -38,6 +38,8 @@ pip install fastapi-problem rfc9457
 pip install python-multipart
 # Almacenamiento de imágenes en Cloudinary
 pip install cloudinary
+# Autenticación (JWT + contraseñas hasheadas)
+pip install python-jose[cryptography] pwdlib[bcrypt] bcrypt
 ```
 ### 3. (Opcional) Dependencias de test
 ```sh
@@ -104,6 +106,7 @@ portfolio-python/
 │   ├── schemas/
 │   │   └── dtos.py             → Pydantic request/response DTOs
 │   └── api/
+│       ├── auth/               → routes, service, repository, google_service
 │       ├── language/           → routes, service, repository
 │       ├── technology/         → routes, service, repository
 │       ├── project/            → routes, service, repository

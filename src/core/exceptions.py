@@ -25,6 +25,15 @@ class DuplicateNameError(BadRequestProblem):
     self.message = self.detail
 
 
+class ConflictError(BadRequestProblem):
+  type_ = "conflict"
+  title = "Conflict."
+
+  def __init__(self, message: str = "Conflict"):
+    super().__init__(detail=message)
+    self.message = message
+
+
 class UnauthorizedError(UnauthorisedProblem):
   type_ = "unauthorized"
   title = "Unauthorized."

@@ -1,57 +1,56 @@
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.status import HTTP_200_OK, HTTP_204_NO_CONTENT
-
-from src.core.dependencies import verify_api_key
-from src.core import database
+from src.core.database import get_db
 from src.core.limiter import limiter
-from . import schemas, service
+from src.core.security import require_user, verify_api_key
+from src.schemas import auth_dtos
+from . import service
 
 router = APIRouter(
-  prefix="/auth", 
+  prefix="/auth",
   tags=["auth"],
+  # Toda la API exige la API Key del BFF (a nivel de router: ninguna ruta
+  # nueva puede quedarse sin proteger por descuido). Fuera quedan solo
+  # /health y /docs, que son infraestructura, no API.
   dependencies=[Depends(verify_api_key)],
 )
 
 
-@router.post(
-  "/google",
-  response_model=schemas.AuthGoogleResponse,
-  status_code=HTTP_200_OK,
-  summary="Authenticate with Google",
-  description="Validates Google token, gets/creates user and returns JWT.",
-)
+@router.post("/login")
 @limiter.limit("10/minute")
-async def auth_google(
-  request: Request,
-  auth_data: schemas.AuthGoogleRequest,
-  db: AsyncSession = Depends(database.get_db)
-):
-  return await service.auth_service(db, auth_data.googleToken)
+async def login(request: Request, data: auth_dtos.UserLogin, db: AsyncSession = Depends(get_db)):
+  svc = service.AuthService(db)
+  return await svc.login(data)
 
 
-@router.post(
-  "/refresh",
-  response_model=schemas.AuthRefreshResponse,
-  status_code=HTTP_200_OK,
-  summary="Refresh JWT token",
-  description="Rotates refresh token and returns new JWT + new refresh token.",
-)
-async def auth_refresh(
-  data: schemas.AuthRefreshRequest,
-  db: AsyncSession = Depends(database.get_db)
-):
-  return await service.refresh_session(db, data.refresh_token)
+@router.post("/register", response_model=auth_dtos.Token)
+@limiter.limit("10/minute")
+async def register(request: Request, data: auth_dtos.UserRegister, db: AsyncSession = Depends(get_db)):
+  svc = service.AuthService(db)
+  return await svc.register(data)
 
 
-@router.post(
-  "/logout",
-  status_code=HTTP_204_NO_CONTENT,
-  summary="Logout",
-  description="Revokes the refresh token.",
-)
-async def auth_logout(
-  data: schemas.AuthRefreshRequest,
-  db: AsyncSession = Depends(database.get_db)
-):
-  await service.revoke_session(db, data.refresh_token)
+@router.post("/refresh", response_model=auth_dtos.Token)
+@limiter.limit("30/minute")
+async def refresh(request: Request, data: auth_dtos.RefreshRequest, db: AsyncSession = Depends(get_db)):
+  svc = service.AuthService(db)
+  return await svc.refresh_token(data.refresh_token)
+
+
+@router.post("/logout")
+async def logout(user=Depends(require_user), db: AsyncSession = Depends(get_db)):
+  svc = service.AuthService(db)
+  return await svc.logout(user["id"])
+
+
+@router.get("/me", response_model=auth_dtos.UserProfile)
+async def me(user=Depends(require_user), db: AsyncSession = Depends(get_db)):
+  svc = service.AuthService(db)
+  return await svc.get_profile(user["id"])
+
+
+@router.post("/google", response_model=auth_dtos.Token)
+@limiter.limit("10/minute")
+async def google(request: Request, data: auth_dtos.AuthGoogleRequest, db: AsyncSession = Depends(get_db)):
+  svc = service.AuthService(db)
+  return await svc.google_login(data.googleToken)

@@ -10,6 +10,7 @@ from rfc9457 import BadRequestProblem, Problem, ServerProblem, UnprocessableProb
 from slowapi.errors import RateLimitExceeded
 from starlette.responses import FileResponse, JSONResponse
 
+from src.api.auth.routes import router as auth_router
 from src.api.language.routes import router as language_router
 from src.api.project.routes import router as project_router
 from src.api.technology.routes import router as technology_router
@@ -118,6 +119,7 @@ async def health():
   }
 
 
+app.include_router(auth_router, prefix="/api")
 app.include_router(language_router, prefix="/api")
 app.include_router(technology_router, prefix="/api")
 app.include_router(project_router, prefix="/api")

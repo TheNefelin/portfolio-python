@@ -1,10 +1,10 @@
-from fastapi import Header
+"""Dependencias transversales de la API (API Key del BFF).
 
-from src.core.config import settings
-from src.core.exceptions import InvalidApiKeyError
+Fachada: la implementación vive en `core.security` (única fuente de verdad).
+Aquí solo se reexporta para que los routers sigan importando desde
+`src.core.dependencies` sin cambiar sus imports.
+"""
 
+from src.core.security import verify_api_key
 
-async def verify_api_key(x_api_key: str = Header(..., alias="X-API-Key")):
-  if x_api_key != settings.API_KEY:
-    raise InvalidApiKeyError()
-  return True
+__all__ = ["verify_api_key"]

@@ -1,63 +1,74 @@
+"""Verificación de tokens de Google contra el endpoint tokeninfo.
+
+Google verifica la firma y los claims del token del lado del servidor.
+Único camino para access_token (flujo GIS implícito) e id_token (JWT).
+
+Reglas de aceptación:
+- status 200 de tokeninfo (Google valida el token del lado del servidor).
+- aud == GOOGLE_CLIENT_ID: sin esto, un token emitido para otra app de
+  Google daría acceso a esta.
+- email_verified presente y verdadero.
+- iss de Google, solo para id_token (JWT). Los access token opacos
+  NO llevan/devuelve iss en tokeninfo.
+
+Devuelve el payload del token o None si no es válido / no se puede verificar.
+"""
+
 import httpx
 
 from src.core.config import settings
-from src.core.exceptions import UnauthorizedError
-from . import schemas
 
-GOOGLE_TOKEN_INFO_URL = "https://oauth2.googleapis.com/tokeninfo"
-GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
+_VALID_ISSUERS = ("accounts.google.com", "https://accounts.google.com")
+_TIMEOUT_SECONDS = 10.0
 
 
-# FETCH USERINFO (fallback si tokeninfo omite name/picture) ----------
-async def _fetch_userinfo(client: httpx.AsyncClient, access_token: str) -> dict:
-  response = await client.get(
-    GOOGLE_USERINFO_URL,
-    headers={"Authorization": f"Bearer {access_token}"},
-  )
-  return response.json() if response.status_code == 200 else {}
+async def verify_google_token(token: str) -> dict | None:
+  if not token:
+    return None
 
+  # id_token es un JWT (2 puntos); el access_token opaco no.
+  param = "id_token" if token.count(".") == 2 else "access_token"
 
-# VERIFY TOKEN (valida aud + email en Google) -------------------------
-async def verify_google_token(access_token: str) -> schemas.GoogleUserInfo:
-  # Validar el token contra Google y verificar que fue emitido para ESTA
-  # aplicación (aud == GOOGLE_CLIENT_ID). Sin este check, cualquier access
-  # token de Google válido (emitido a otra app) permitiría autenticarse.
-  async with httpx.AsyncClient(timeout=10) as client:
-    response = await client.get(
-      GOOGLE_TOKEN_INFO_URL,
-      params={"access_token": access_token},
-    )
+  try:
+    async with httpx.AsyncClient(timeout=_TIMEOUT_SECONDS) as client:
+      response = await client.get(settings.GOOGLE_TOKEN_INFO_URL, params={param: token})
+  except httpx.HTTPError:
+    # Red caída, timeout o error de conexión con Google.
+    return None
 
   if response.status_code != 200:
-    raise UnauthorizedError(message="Invalid Google token")
+    return None
 
-  token_info = response.json()
+  data = response.json()
 
-  if settings.GOOGLE_CLIENT_ID and token_info.get("aud") != settings.GOOGLE_CLIENT_ID:
-    raise UnauthorizedError(message="Invalid Google token")
+  aud_ok = data.get("aud") == settings.GOOGLE_CLIENT_ID
+  # iss solo aplica/existe en id_token; para access token opaco, tokeninfo no lo devuelve.
+  iss_ok = (data.get("iss") in _VALID_ISSUERS) if param == "id_token" else True
+  email_verified = data.get("email_verified")
+  email_verified_ok = str(email_verified).strip().lower() == "true"
 
-  # Los access tokens (lo que envía el frontend) no traen `iss` de forma
-  # confiable (ese campo solo está garantizado en id_tokens). Solo se exige
-  # cuando viene presente; la seguridad real la da el check de `aud`.
-  iss = token_info.get("iss")
-  if iss and iss not in ("accounts.google.com", "https://accounts.google.com"):
-    raise UnauthorizedError(message="Invalid Google token")
+  if not (aud_ok and iss_ok and email_verified_ok):
+    return None
 
-  email_verified = token_info.get("email_verified")
-  if email_verified not in (True, "true"):
-    raise UnauthorizedError(message="Email not verified")
+  return data
 
-  # /tokeninfo con un access token no garantiza `picture`/`name`. Si faltan,
-  # se consultan de /userinfo (misma validez: el token ya fue validado por aud).
-  userinfo = {}
-  if not token_info.get("picture") or not token_info.get("name"):
-    async with httpx.AsyncClient(timeout=10) as client:
-      userinfo = await _fetch_userinfo(client, access_token)
 
-  return schemas.GoogleUserInfo(
-    google_id=token_info["sub"],
-    email=token_info["email"],
-    name=userinfo.get("name") or token_info.get("name"),
-    picture=userinfo.get("picture") or token_info.get("picture"),
-    email_verified=True,
-  )
+async def fetch_google_userinfo(token: str) -> dict | None:
+  """Obtiene el perfil del usuario autenticado (name, given_name, family_name, picture).
+
+  Se llama DESPUÉS de verificar el token. Devuelve None si falla (degradación suave:
+  el login puede completarse igualmente con los datos de tokeninfo).
+  """
+  try:
+    async with httpx.AsyncClient(timeout=_TIMEOUT_SECONDS) as client:
+      response = await client.get(
+        settings.GOOGLE_USERINFO_URL,
+        headers={"Authorization": f"Bearer {token}"},
+      )
+  except httpx.HTTPError:
+    return None
+
+  if response.status_code != 200:
+    return None
+
+  return response.json()
