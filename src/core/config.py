@@ -22,22 +22,19 @@ class Settings(BaseSettings):
   JWT_REFRESH_EXPIRE_DAYS: int = 1
   JWT_REFRESH_IDLE_MINUTES: int = 30
 
-  GOOGLE_CLIENT_ID: str
-  GOOGLE_CLIENT_SECRET: str
-  GOOGLE_TOKEN_INFO_URL: str
-  GOOGLE_USERINFO_URL: str
-  GOOGLE_ISSUER: str
-  GOOGLE_SCOPE: str
-
-  GITHUB_CLIENT_ID: str | None = None
-  GITHUB_CLIENT_SECRET: str | None = None
-
-  APPLE_CLIENT_ID: str | None = None
-  APPLE_CLIENT_SECRET: str | None = None
+  # Google OAuth. Solo CLIENT_ID, TOKEN_INFO_URL y USERINFO_URL se usan realmente
+  # (google_service.py). Las demas (client_secret, issuer, scope) no se usan hoy:
+  # el login usa el flujo implicit de GIS y valida aud + email_verified en tokeninfo.
+  GOOGLE_CLIENT_ID: str = ""
+  GOOGLE_TOKEN_INFO_URL: str = "https://oauth2.googleapis.com/tokeninfo"
+  GOOGLE_USERINFO_URL: str = "https://www.googleapis.com/oauth2/v3/userinfo"
 
   @property
   def cors_origins_list(self) -> list[str]:
-    return json.loads(self.CORS_ORIGINS)
+    raw = self.CORS_ORIGINS.strip()
+    if not raw:
+      return []
+    return json.loads(raw)
 
   model_config = SettingsConfigDict(
     env_file=".env",
