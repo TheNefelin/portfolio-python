@@ -5,11 +5,11 @@
 
 ## Tarea activa
 
-Poner la memoria al día. Auth queda **fuera de alcance**: no está implementado y no se toca.
+Alinear el contrato de auth con `portfolio-angular`. La API ya está implementada y montada; el login no completa por nombres de campo distintos.
 
 ## Último avance comprobado
 
-`pytest`: 62 tests pasan con language, technology, project, url y url-grp. `src/api/auth/` existe como WIP (sin commit), no se puede importar y no está montado en `main.py`.
+`src/main.py` importa e incluye `auth_router` bajo `/api`: existen `/api/auth/{google,login,register,refresh,logout,me}`. `src/core/security.py` resuelve JWT, `verify_api_key`, `require_user` y `require_admin`; las tablas de auth están en `postgre_auth.sql` y los modelos en `src/models/auth_models.py`. El OpenAPI de la API local en `:8000` lista los seis endpoints; sin `X-API-Key` responden 401. `google_service` valida `aud` contra `GOOGLE_CLIENT_ID` y `email_verified`. La memoria del proyecto quedó actualizada (el estado "auth no implementado" estaba caducado).
 
 ## Archivos tocados
 
@@ -18,15 +18,15 @@ Poner la memoria al día. Auth queda **fuera de alcance**: no está implementado
 
 ## Pruebas ejecutadas y resultado real
 
-- `.venv\Scripts\python.exe -m pytest -q`: 62 passed.
-- `python -c "import src.api.auth.routes"`: falla por `EmailStr` sin `email-validator`.
-- `grep auth src/main.py`: sin resultados (router no montado).
+- 62 funciones `test_` en `tests/` (language 12, project 13, technology 12, url 12, url_grp 13); la última corrida registrada da 62 pasan.
+- `pytest` **no** se ejecutó: `tests/conftest.py` hace `create_all`/`drop_all` sobre `TEST_DATABASE_URL` o `DATABASE_URL`, que puede ser la BD en uso.
+- Comprobación HTTP contra la API local: 401 sin `X-API-Key` en rutas de auth y de portfolio.
 
 ## Bloqueos
 
-- Ninguno en las features activas.
-- Auth sin implementar: faltan `src/core/security.py`, `src/api/users/`, modelos y tablas de usuario, librería JWT y el montaje del router.
+- Falta decidir en qué lado se alinea: hoy `Token` es `{access_token, refresh_token, token_type, expires_in}` y el front lee `{token, refresh_token, user}`.
+- Auth sin cobertura de tests.
 
 ## Siguiente paso
 
-Ninguno autorizado sobre auth. Si se retoma, primero decidir alcance (solo Google o también GitHub/Apple, librería JWT y rol inicial).
+Acordar la forma final del token y del payload de usuario, aplicarla en un solo lado y anotarla en el `DEVELOPMENT.md` de la raíz.

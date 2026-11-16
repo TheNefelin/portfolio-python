@@ -15,7 +15,7 @@ uvicorn src.main:app --reload
 python --version            # python3 --version
 python -m pip list          # python3 -m pip list
 python -m venv .venv        # python3 -m venv .venv
-.venv\Scripts\activate  # source .venv/bin/activate
+.venv\Scripts\activate      # source .venv/bin/activate
 python run.py               # python3 run.py
 ```
 
@@ -39,7 +39,7 @@ pip install python-multipart
 # Almacenamiento de imágenes en Cloudinary
 pip install cloudinary
 # Autenticación (JWT + contraseñas hasheadas)
-pip install python-jose[cryptography] pwdlib[bcrypt] bcrypt
+pip install python-jose[cryptography] pwdlib[bcrypt] bcrypt cryptography ecdsa pyasn1 pycparser rsa cffi
 ```
 ### 3. (Opcional) Dependencias de test
 ```sh
