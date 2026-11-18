@@ -44,7 +44,7 @@ API FastAPI por feature. Cada feature vive en `src/api/<feature>/` y expone `rou
 | Aceptado | Auth con Google OAuth + JWT: access token de 15 min, refresh rotativo de 1 día, revocación y detección de reuso en `user_sessions`. Roles `admin` y `user` en `user_roles`. | Sesión sin guardar contraseñas; el refresh rotativo limita el uso de un token robado. |
 | Aceptado | `google_service` valida `aud` contra `GOOGLE_CLIENT_ID` y `email_verified`; acepta `id_token` (JWT) o `access_token` opaco. | Un token emitido para otra app no debe crear sesión. |
 | Aceptado | Tests con `pytest`; los casos `@pytest.mark.live` se excluyen por defecto. | Los tests base no dependen de servicios externos reales. |
-| Pendiente | Alinear el contrato de auth con `portfolio-angular`: la API devuelve `{access_token, refresh_token, token_type, expires_in}` y el front lee `{token, refresh_token, user}`. | El login no completa mientras los nombres no coincidan. |
+| Aceptado | Contrato de auth alineado con `portfolio-angular`: la API devuelve `{access_token, refresh_token, token_type, expires_in}` y el BFF (cookies HttpOnly) consume `access_token`. `/auth/me` devuelve `UserProfile`. | El BFF gestiona la sesión; el front no accede a los tokens. |
 
 ## Estado
 
@@ -61,7 +61,7 @@ API FastAPI por feature. Cada feature vive en `src/api/<feature>/` y expone `rou
 ## Problemas conocidos
 
 - El error 400 de creación de `project`.
-- El contrato de auth está desalineado con el front (ver Decisiones).
+- El contrato de auth está alineado con el front (cookies HttpOnly en el BFF).
 
 ## Deuda técnica
 
