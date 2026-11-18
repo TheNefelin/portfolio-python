@@ -5,6 +5,7 @@ from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
 from src.core.database import get_db
 from src.core.dependencies import verify_api_key
+from src.core.security import require_admin
 from src.schemas import dtos
 
 from . import service
@@ -12,7 +13,7 @@ from . import service
 router = APIRouter(prefix="/project", tags=["project"], dependencies=[Depends(verify_api_key)])
 
 
-@router.get("/pagination", response_model=dtos.PaginationResponse[dtos.ProjectResponse], status_code=HTTP_200_OK)
+@router.get("/pagination", response_model=dtos.PaginationResponse[dtos.ProjectResponse], status_code=HTTP_200_OK, dependencies=[Depends(require_admin)])
 async def get_all_pagination(
   params: Annotated[dtos.PaginationRequest, Depends()],
   db: AsyncSession = Depends(get_db),
@@ -26,31 +27,31 @@ async def get_all(db: AsyncSession = Depends(get_db)):
   return result.items
 
 
-@router.get("/{id}", response_model=dtos.ProjectResponse, status_code=HTTP_200_OK)
+@router.get("/{id}", response_model=dtos.ProjectResponse, status_code=HTTP_200_OK, dependencies=[Depends(require_admin)])
 async def get_by_id(id: int, db: AsyncSession = Depends(get_db)):
   return await service.get_by_id(db, id)
 
 
-@router.post("/", response_model=dtos.ProjectResponse, status_code=HTTP_201_CREATED)
+@router.post("/", response_model=dtos.ProjectResponse, status_code=HTTP_201_CREATED, dependencies=[Depends(require_admin)])
 async def create(data: dtos.ProjectRequest, db: AsyncSession = Depends(get_db)):
   return await service.create(db, data)
 
 
-@router.put("/{id}", response_model=dtos.ProjectResponse, status_code=HTTP_200_OK)
+@router.put("/{id}", response_model=dtos.ProjectResponse, status_code=HTTP_200_OK, dependencies=[Depends(require_admin)])
 async def update(id: int, data: dtos.ProjectRequest, db: AsyncSession = Depends(get_db)):
   return await service.update(db, id, data)
 
 
-@router.delete("/{id}", status_code=HTTP_204_NO_CONTENT)
+@router.delete("/{id}", status_code=HTTP_204_NO_CONTENT, dependencies=[Depends(require_admin)])
 async def delete(id: int, db: AsyncSession = Depends(get_db)):
   await service.delete(db, id)
 
 
-@router.post("/{id}/upload-image", response_model=dtos.ProjectResponse, status_code=HTTP_200_OK)
+@router.post("/{id}/upload-image", response_model=dtos.ProjectResponse, status_code=HTTP_200_OK, dependencies=[Depends(require_admin)])
 async def upload_image(id: int, file: UploadFile = File(...), db: AsyncSession = Depends(get_db)):
   return await service.upload_image(db, id, await file.read())
 
 
-@router.delete("/{id}/image", status_code=HTTP_204_NO_CONTENT)
+@router.delete("/{id}/image", status_code=HTTP_204_NO_CONTENT, dependencies=[Depends(require_admin)])
 async def delete_image(id: int, db: AsyncSession = Depends(get_db)):
   await service.delete_image(db, id)

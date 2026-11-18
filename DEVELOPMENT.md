@@ -43,6 +43,8 @@ API FastAPI por feature. Cada feature vive en `src/api/<feature>/` y expone `rou
 | Aceptado | Imágenes en Cloudinary; la BD guarda solo la URL. | Evita binarios en la base y simplifica el borrado idempotente. |
 | Aceptado | Auth con Google OAuth + JWT: access token de 15 min, refresh rotativo de 1 día, revocación y detección de reuso en `user_sessions`. Roles `admin` y `user` en `user_roles`. | Sesión sin guardar contraseñas; el refresh rotativo limita el uso de un token robado. |
 | Aceptado | `google_service` valida `aud` contra `GOOGLE_CLIENT_ID` y `email_verified`; acepta `id_token` (JWT) o `access_token` opaco. | Un token emitido para otra app no debe crear sesión. |
+| Aceptado | Todos los recursos (`project`, `language`, `technology`, `url`, `url-grp`): solo `GET /` (listado completo) es público (solo `verify_api_key`); `GET /pagination`, `GET /{id}` y toda escritura exigen `require_admin`. | El HOME consume `GET /` de project y `GET /detail` de url-grp; el admin usa paginación y detalle. |
+| Aceptado | El rol `admin` se asigna manualmente en la BD (`user_roles`/`users`); los usuarios nuevos reciben `user` por defecto. | Sin hacks de asignación automática; el admin de sistema gestiona los roles. |
 | Aceptado | Tests con `pytest`; los casos `@pytest.mark.live` se excluyen por defecto. | Los tests base no dependen de servicios externos reales. |
 | Aceptado | Contrato de auth alineado con `portfolio-angular`: la API devuelve `{access_token, refresh_token, token_type, expires_in}` y el BFF (cookies HttpOnly) consume `access_token`. `/auth/me` devuelve `UserProfile`. | El BFF gestiona la sesión; el front no accede a los tokens. |
 
@@ -57,6 +59,7 @@ API FastAPI por feature. Cada feature vive en `src/api/<feature>/` y expone `rou
 - **Sin tests de auth:** no hay casos para `google`, `refresh`, `logout` ni para la verificación de `X-API-Key`.
 - **GitHub y Apple:** `config.py` y `.env.example` declaran credenciales, pero no hay validación de esos proveedores.
 - **Error 400 en `POST /api/project`:** aparcado; no crítico por ahora.
+- Todos los recursos ya siguen el patrón: solo `GET /` público, el resto exige admin. Los tests de escritura necesitan override de `require_admin` en el fixture.
 
 ## Problemas conocidos
 
