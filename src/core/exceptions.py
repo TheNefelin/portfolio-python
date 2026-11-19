@@ -1,4 +1,4 @@
-from rfc9457 import BadRequestProblem, ForbiddenProblem, NotFoundProblem, Problem, UnauthorisedProblem
+from rfc9457 import BadRequestProblem, ConflictProblem, ForbiddenProblem, NotFoundProblem, Problem, UnauthorisedProblem
 
 
 class AppError(Problem):
@@ -25,7 +25,7 @@ class DuplicateNameError(BadRequestProblem):
     self.message = self.detail
 
 
-class ConflictError(BadRequestProblem):
+class ConflictError(ConflictProblem):
   type_ = "conflict"
   title = "Conflict."
 

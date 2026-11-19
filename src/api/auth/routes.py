@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.status import HTTP_201_CREATED
 from src.core.database import get_db
 from src.core.limiter import limiter
 from src.core.security import require_user, verify_api_key
@@ -23,7 +24,7 @@ async def login(request: Request, data: auth_dtos.UserLogin, db: AsyncSession = 
   return await svc.login(data)
 
 
-@router.post("/register", response_model=auth_dtos.Token)
+@router.post("/register", response_model=auth_dtos.Token, status_code=HTTP_201_CREATED)
 @limiter.limit("10/minute")
 async def register(request: Request, data: auth_dtos.UserRegister, db: AsyncSession = Depends(get_db)):
   svc = service.AuthService(db)

@@ -51,12 +51,12 @@ API FastAPI por feature. Cada feature vive en `src/api/<feature>/` y expone `rou
 ## Estado
 
 - API activa con los routers `language`, `technology`, `project`, `url`, `url-grp` y `auth` montados bajo `/api`.
-- 62 tests en `tests/` (última corrida registrada: 62 pasan). Sin cobertura de auth.
+- 81 tests en `tests/` (62 originales + 19 de auth). Todos pasan.
 - [ ] Confirmar si el error 400 de `POST /api/project` sigue vigente y cuál es su causa.
 
 ## Pendientes
 
-- **Sin tests de auth:** no hay casos para `google`, `refresh`, `logout` ni para la verificación de `X-API-Key`.
+- **Tests de auth:** 19 tests en `tests/test_auth.py` (register, login, me, refresh, logout, google, api key, validación). Cobertura de refresh rotation y reuse detection.
 - **GitHub y Apple:** `config.py` y `.env.example` declaran credenciales, pero no hay validación de esos proveedores.
 - **Error 400 en `POST /api/project`:** aparcado; no crítico por ahora.
 - **Tests de escritura:** los tests existentes usan `override_verify_api_key` pero no overridean `require_admin`; hay que añadir el override en los casos de escritura.

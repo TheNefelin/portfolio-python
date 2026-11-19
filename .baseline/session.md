@@ -5,31 +5,30 @@
 
 ## Tarea activa
 
-Restricción de acceso a los endpoints del backend: todos los recursos (`project`, `language`, `technology`, `url`, `url-grp`) siguen el patrón de solo `GET /` público y el resto (pagination, by-id, escritura) exige `require_admin`. Completado.
+Tests de auth implementados y pasando (19 tests). Pendiente: proveedores GitHub y Apple, error 400 ya diagnosticado (DuplicateNameError).
 
 ## Último avance comprobado
 
-Los cinco recursos (`project`, `language`, `technology`, `url`, `url-grp`) tienen `require_admin` en pagination, by-id y escritura. `GET /` queda público (solo `verify_api_key`). `url-grp` además mantiene `GET /detail` público (footer del HOME). Sin promoción automática: el rol `admin` se asigna manualmente en la BD. Import de `src.main` OK. Verificado por HTTP vía BFF: `GET /project/` → 200, `GET /project/pagination` → 401, `GET /project/20` → 401, `POST /project/` → 401 (sin sesión).
+Se creó `tests/test_auth.py` con 19 tests: register (success, duplicate, validación), login (success, wrong password, nonexistent), me (sin auth, con token), refresh (success, invalid, reuse detection), logout (sin auth, success), google (invalid token, missing token, valid token con mock), API key (missing, invalid). ConflictError cambiado a ConflictProblem (409). Register route ahora devuelve 201. conftest actualizado con override de require_admin y seed de auth data. Todos los tests pasan (81/81).
 
 ## Archivos tocados
 
-- `src/api/project/routes.py`, `src/api/language/routes.py`, `src/api/technology/routes.py`, `src/api/url/routes.py`, `src/api/url_grp/routes.py`
-- `src/api/auth/service.py`
-- `src/core/config.py`
-- `.env.example`
+- `tests/test_auth.py` (nuevo)
+- `tests/conftest.py` (seed auth, override require_admin, drop tables en orden)
+- `src/api/auth/routes.py` (register → 201)
+- `src/core/exceptions.py` (ConflictError → ConflictProblem 409)
 - `DEVELOPMENT.md`
 - `.baseline/session.md`
 
 ## Pruebas ejecutadas y resultado real
 
-- `python -c "import src.main"`: OK.
-- HTTP vía BFF: GET project → 200; pagination → 401; by-id → 401; POST → 401.
-- `pytest` no ejecutado (drop_all).
+- `pytest tests/test_auth.py -q`: 19 passed.
+- `pytest -q` (suite completa): 81 passed, 5 warnings.
 
 ## Bloqueos
 
-- Los tests de escritura necesitan override de `require_admin` en el fixture (pendiente).
+- Ninguno.
 
 ## Siguiente paso
 
-Actualizar los tests de `project`, `language`, `technology`, `url` y `url-grp` para overridear `require_admin` en los casos de escritura.
+Proveedores GitHub y Apple (validación OAuth), o error 400 si el usuario sigue viéndolo en el frontend.
