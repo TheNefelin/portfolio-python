@@ -6,6 +6,7 @@ from sqlalchemy.pool import NullPool
 from src.core.config import settings
 from src.core.database import Base, get_db
 from src.core.dependencies import verify_api_key
+from src.core.security import require_admin
 from src.main import app
 from src.models.models import Language, Project, ProjectLanguage, ProjectTechnology, Technology, Url, UrlGrp
 
@@ -49,8 +50,12 @@ async def client(db):
   async def override_verify_api_key():
     return True
 
+  async def override_require_admin():
+    return {"id": "test-admin", "role": "admin", "email": "admin@test.com", "is_active": True}
+
   app.dependency_overrides[get_db] = override_get_db
   app.dependency_overrides[verify_api_key] = override_verify_api_key
+  app.dependency_overrides[require_admin] = override_require_admin
   async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
     yield ac
   app.dependency_overrides.clear()

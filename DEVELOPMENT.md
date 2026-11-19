@@ -59,7 +59,7 @@ API FastAPI por feature. Cada feature vive en `src/api/<feature>/` y expone `rou
 - **Sin tests de auth:** no hay casos para `google`, `refresh`, `logout` ni para la verificación de `X-API-Key`.
 - **GitHub y Apple:** `config.py` y `.env.example` declaran credenciales, pero no hay validación de esos proveedores.
 - **Error 400 en `POST /api/project`:** aparcado; no crítico por ahora.
-- Todos los recursos ya siguen el patrón: solo `GET /` público, el resto exige admin. Los tests de escritura necesitan override de `require_admin` en el fixture.
+- **Tests de escritura:** los tests existentes usan `override_verify_api_key` pero no overridean `require_admin`; hay que añadir el override en los casos de escritura.
 
 ## Problemas conocidos
 
