@@ -105,8 +105,14 @@ class AuthService:
 
     return await self._issue_tokens(user.id)
 
-  async def github_login(self, github_token: str) -> dict:
-    info = await github_service.verify_github_token(github_token)
+  async def github_login(self, code: str) -> dict:
+    # Intercambiar el code por un access token de GitHub
+    access_token = await github_service.exchange_code_for_token(code)
+    if not access_token:
+      logger.warning("GitHub login fallido: no se pudo obtener access token")
+      raise UnauthorizedError("Invalid GitHub code")
+
+    info = await github_service.verify_github_token(access_token)
     if not info:
       logger.warning("GitHub login fallido: token inválido")
       raise UnauthorizedError("Invalid GitHub token")

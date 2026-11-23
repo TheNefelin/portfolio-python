@@ -17,6 +17,36 @@ from src.core.config import settings
 _TIMEOUT_SECONDS = 10.0
 _GITHUB_USER_URL = "https://api.github.com/user"
 _GITHUB_EMAILS_URL = "https://api.github.com/user/emails"
+_GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"
+
+
+async def exchange_code_for_token(code: str) -> str | None:
+    """Intercambia el authorization code por un access token de GitHub."""
+    if not code or not settings.GITHUB_CLIENT_ID or not settings.GITHUB_CLIENT_SECRET:
+        return None
+
+    try:
+        async with httpx.AsyncClient(timeout=_TIMEOUT_SECONDS) as client:
+            response = await client.post(
+                settings.GITHUB_TOKEN_URL or _GITHUB_TOKEN_URL,
+                data={
+                    "client_id": settings.GITHUB_CLIENT_ID,
+                    "client_secret": settings.GITHUB_CLIENT_SECRET,
+                    "code": code,
+                },
+                headers={"Accept": "application/json"},
+            )
+    except httpx.HTTPError:
+        return None
+
+    if response.status_code != 200:
+        return None
+
+    data = response.json()
+    if "error" in data:
+        return None
+
+    return data.get("access_token")
 
 
 async def verify_github_token(token: str) -> dict | None:

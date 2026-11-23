@@ -57,10 +57,34 @@ pip install -r requirements.txt
 ```
 
 ### 4. Configurar variables de entorno
-Crear archivo `.env` basado en `.env_demo`:
+Crear archivo `.env` basado en `.env.example`:
 ```sh
-cp .env_demo .env
+cp .env.example .env
 ```
+
+### 4.1 Configurar OAuth (opcional)
+
+El proyecto soporta login con Google, GitHub y Apple. Solo Google y GitHub están activos por defecto; Apple está desactivado (requiere Apple Developer Program, $99/año).
+
+**Google Sign In:**
+1. Ve a [Google Cloud Console](https://console.cloud.google.com) → APIs & Services → Credentials.
+2. Crea un OAuth 2.0 Client ID (tipo "Web application").
+3. Añade `http://localhost:4200` y tu dominio de producción a "Authorized JavaScript origins".
+4. Copia el Client ID a `GOOGLE_CLIENT_ID` en `.env`.
+
+**GitHub OAuth:**
+1. Ve a [github.com/settings/developers](https://github.com/settings/developers) → OAuth Apps → New OAuth App.
+2. Rellena: Application name, Homepage URL (`http://localhost:4200`), Authorization callback URL (`http://localhost:4200/auth/github/callback`).
+3. Copia Client ID y Client Secret a `GITHUB_CLIENT_ID` y `GITHUB_CLIENT_SECRET` en `.env`.
+
+**Apple Sign In (opcional, requiere Apple Developer Program $99/año):**
+1. Ve a [developer.apple.com](https://developer.apple.com) → Certificates, Identifiers & Profiles.
+2. Crea un App ID con "Sign in with Apple" habilitado.
+3. Crea un Services ID (este es el `APPLE_CLIENT_ID`).
+4. Configura el dominio y las redirect URLs.
+5. Verifica el dominio hosteando el archivo de asociación en `https://tu-dominio/.well-known/apple-developer-domain-association.txt`.
+6. Copia el Services ID a `APPLE_CLIENT_ID` en `.env`.
+7. Para activar: cambia `is_active` a `TRUE` en `postgre_auth.sql` para el proveedor `apple`.
 
 ### 5. Generar SECRET_KEY
 ```sh

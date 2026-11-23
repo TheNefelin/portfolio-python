@@ -50,12 +50,12 @@ class AuthGoogleRequest(BaseModel):
 
 
 class AuthGithubRequest(BaseModel):
-  """GitHub login request (access_token del frontend via OAuth)."""
+  """GitHub login request (authorization code del frontend via OAuth)."""
 
-  githubToken: str = Field(
+  code: str = Field(
     ...,
     min_length=1,
-    description="access_token emitido por GitHub OAuth",
+    description="authorization code emitido por GitHub OAuth",
   )
 
 

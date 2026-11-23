@@ -43,9 +43,8 @@ API FastAPI por feature. Cada feature vive en `src/api/<feature>/` y expone `rou
 | Aceptado | Imágenes en Cloudinary; la BD guarda solo la URL. | Evita binarios en la base y simplifica el borrado idempotente. |
 | Aceptado | Auth con Google OAuth + JWT: access 15 min, refresh rotativo 1 día, revocación y detección de reuso en `user_sessions`. Roles `admin` y `user`. | Refresh rotativo limita el uso de un token robado. |
 | Aceptado | `google_service` valida `aud` y `email_verified`; acepta `id_token` o `access_token` opaco. | Token de otra app no crea sesión. |
-| Aceptado | `github_service` verifica el access_token contra `https://api.github.com/user`; obtiene email de `/user/emails` si es privado. | Sigue el patrón de google_service. |
-| Aceptado | `apple_service` verifica el identity token (JWT RS256) contra Apple JWKS; valida `iss`, `aud` y `exp`. | Apple solo envía el nombre en el primer login (vía parámetro). |
-| Aceptado | Todos los recursos: solo `GET /` es público (solo `verify_api_key`); `GET /pagination`, `GET /{id}` y toda escritura exigen `require_admin`. | El HOME consume `GET /` de project y `GET /detail` de url-grp. |
+| Aceptado | `github_service` verifica access_token contra GitHub API. `apple_service` verifica identity token JWT contra Apple JWKS. 6 tests. GitHub activo, Apple inactivo ($99/año). | Sigue el patrón de google_service. |
+| Aceptado | Todos los recursos: solo `GET /` es público (`verify_api_key`); `GET /pagination`, `GET /{id}` y toda escritura exigen `require_admin`. | HOME consume `GET /` de project y `GET /detail` de url-grp. |
 | Aceptado | El rol `admin` se asigna manualmente en la BD; los usuarios nuevos reciben `user` por defecto. | Sin hacks de asignación automática. |
 | Aceptado | Tests con `pytest`; los casos `@pytest.mark.live` se excluyen por defecto. | Los tests base no dependen de servicios externos reales. |
 | Aceptado | Contrato de auth alineado: la API devuelve `{access_token, ...}` y el BFF (cookies HttpOnly) consume `access_token`. `/auth/me` devuelve `UserProfile`. | El BFF gestiona la sesión. |
@@ -58,9 +57,7 @@ API FastAPI por feature. Cada feature vive en `src/api/<feature>/` y expone `rou
 
 ## Pendientes
 
-- **Tests de auth:** 25 tests en `tests/test_auth.py` (register, login, me, refresh, logout, google, github, apple, api key, validación). Cobertura de refresh rotation y reuse detection.
-- **GitHub y Apple:** implementados (`github_service.py`, `apple_service.py`). Endpoints `/auth/github` y `/auth/apple`. 6 tests. GitHub activo, Apple inactivo ($99/año).
-- **Error 400 en `POST /api/project`:** aparcado; no crítico por ahora.
+- Ninguno de funcionalidad. GitHub y Apple implementados (Apple inactivo por costos). Error 400 diagnosticado (DuplicateNameError). Tests de auth: 25 tests, todos pasan.
 
 ## Problemas conocidos
 

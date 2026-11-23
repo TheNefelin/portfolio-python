@@ -35,6 +35,14 @@ class Settings(BaseSettings):
   APPLE_JWKS_URL: str = "https://appleid.apple.com/auth/keys"
   APPLE_ISSUER: str = "https://appleid.apple.com"
 
+  # GitHub OAuth: client_id y client_secret para intercambiar el code por token.
+  # Si están vacíos, GitHub login se desactiva.
+  GITHUB_CLIENT_ID: str = ""
+  GITHUB_CLIENT_SECRET: str = ""
+  GITHUB_TOKEN_URL: str = "https://github.com/login/oauth/access_token"
+  GITHUB_USER_URL: str = "https://api.github.com/user"
+  GITHUB_EMAILS_URL: str = "https://api.github.com/user/emails"
+
   @property
   def cors_origins_list(self) -> list[str]:
     raw = self.CORS_ORIGINS.strip()

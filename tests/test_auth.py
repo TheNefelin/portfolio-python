@@ -303,7 +303,7 @@ async def test_google_valid_token(auth_client, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_github_invalid_token(auth_client):
-    resp = await auth_client.post("/api/auth/github", json={"githubToken": "invalid-token"})
+    resp = await auth_client.post("/api/auth/github", json={"code": "invalid-code"})
     assert resp.status_code == 401
 
 
@@ -325,16 +325,20 @@ async def test_github_valid_token(auth_client, monkeypatch):
         "picture": "https://example.com/github-pic.jpg",
     }
 
+    async def mock_exchange(code):
+        return "fake-access-token"
+
     async def mock_verify(token):
         return mock_info
 
     async def mock_fetch(token):
         return mock_info
 
+    monkeypatch.setattr("src.api.auth.github_service.exchange_code_for_token", mock_exchange)
     monkeypatch.setattr("src.api.auth.github_service.verify_github_token", mock_verify)
     monkeypatch.setattr("src.api.auth.github_service.fetch_github_userinfo", mock_fetch)
 
-    resp = await auth_client.post("/api/auth/github", json={"githubToken": "fake-github-token"})
+    resp = await auth_client.post("/api/auth/github", json={"code": "fake-auth-code"})
     assert resp.status_code in (200, 201)
     data = resp.json()
     assert data["access_token"]

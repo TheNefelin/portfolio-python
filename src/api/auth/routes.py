@@ -61,7 +61,7 @@ async def google(request: Request, data: auth_dtos.AuthGoogleRequest, db: AsyncS
 @limiter.limit("10/minute")
 async def github(request: Request, data: auth_dtos.AuthGithubRequest, db: AsyncSession = Depends(get_db)):
   svc = service.AuthService(db)
-  return await svc.github_login(data.githubToken)
+  return await svc.github_login(data.code)
 
 
 @router.post("/apple", response_model=auth_dtos.Token)
