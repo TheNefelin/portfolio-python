@@ -29,6 +29,12 @@ class Settings(BaseSettings):
   GOOGLE_TOKEN_INFO_URL: str = "https://oauth2.googleapis.com/tokeninfo"
   GOOGLE_USERINFO_URL: str = "https://www.googleapis.com/oauth2/v3/userinfo"
 
+  # Apple Sign In: client_id (Services ID o App ID) para verificar el aud del
+  # identity token. Si está vacío, Apple login se desactiva.
+  APPLE_CLIENT_ID: str = ""
+  APPLE_JWKS_URL: str = "https://appleid.apple.com/auth/keys"
+  APPLE_ISSUER: str = "https://appleid.apple.com"
+
   @property
   def cors_origins_list(self) -> list[str]:
     raw = self.CORS_ORIGINS.strip()

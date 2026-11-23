@@ -5,7 +5,7 @@ from src.core.database import get_db
 from src.core.limiter import limiter
 from src.core.security import require_user, verify_api_key
 from src.schemas import auth_dtos
-from . import service
+from . import service, github_service, apple_service
 
 router = APIRouter(
   prefix="/auth",
@@ -55,3 +55,17 @@ async def me(user=Depends(require_user), db: AsyncSession = Depends(get_db)):
 async def google(request: Request, data: auth_dtos.AuthGoogleRequest, db: AsyncSession = Depends(get_db)):
   svc = service.AuthService(db)
   return await svc.google_login(data.googleToken)
+
+
+@router.post("/github", response_model=auth_dtos.Token)
+@limiter.limit("10/minute")
+async def github(request: Request, data: auth_dtos.AuthGithubRequest, db: AsyncSession = Depends(get_db)):
+  svc = service.AuthService(db)
+  return await svc.github_login(data.githubToken)
+
+
+@router.post("/apple", response_model=auth_dtos.Token)
+@limiter.limit("10/minute")
+async def apple(request: Request, data: auth_dtos.AuthAppleRequest, db: AsyncSession = Depends(get_db)):
+  svc = service.AuthService(db)
+  return await svc.apple_login(data.appleToken, data.name, data.lastname)

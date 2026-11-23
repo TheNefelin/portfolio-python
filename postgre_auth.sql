@@ -171,6 +171,6 @@ ON CONFLICT (name) DO NOTHING;
 INSERT INTO auth_providers (name, display_name, is_active) VALUES
   ('local',  'Email + Contrasena', TRUE),
   ('google', 'Google', TRUE),
-  ('github', 'GitHub', FALSE),
-  ('apple',  'Apple ID', FALSE)
+  ('github', 'GitHub', TRUE),
+  ('apple',  'Apple ID', TRUE)
 ON CONFLICT (name) DO NOTHING;

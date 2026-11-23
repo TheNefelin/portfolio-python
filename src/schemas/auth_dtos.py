@@ -49,6 +49,29 @@ class AuthGoogleRequest(BaseModel):
   )
 
 
+class AuthGithubRequest(BaseModel):
+  """GitHub login request (access_token del frontend via OAuth)."""
+
+  githubToken: str = Field(
+    ...,
+    min_length=1,
+    description="access_token emitido por GitHub OAuth",
+  )
+
+
+class AuthAppleRequest(BaseModel):
+  """Apple Sign In request (identity token del frontend)."""
+
+  appleToken: str = Field(
+    ...,
+    min_length=1,
+    description="identity token (JWT) emitido por Apple Sign In",
+  )
+  # Apple solo envía el nombre en el primer login. El frontend lo envía si está disponible.
+  name: str | None = Field(default=None, description="Nombre del usuario (solo en el primer login)")
+  lastname: str | None = Field(default=None, description="Apellido del usuario (solo en el primer login)")
+
+
 class UserProfile(BaseModel):
   model_config = ConfigDict(from_attributes=True)
 

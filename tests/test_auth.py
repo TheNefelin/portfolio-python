@@ -295,3 +295,109 @@ async def test_google_valid_token(auth_client, monkeypatch):
     assert profile["email"] == "google@example.com"
     assert profile["name"] == "Google"
     assert profile["provider"] == "google"
+
+
+# ---------------------------------------------------------------------------
+# GitHub login
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_github_invalid_token(auth_client):
+    resp = await auth_client.post("/api/auth/github", json={"githubToken": "invalid-token"})
+    assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_github_missing_token(auth_client):
+    resp = await auth_client.post("/api/auth/github", json={})
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_github_valid_token(auth_client, monkeypatch):
+    mock_info = {
+        "sub": "github-user-456",
+        "email": "github@example.com",
+        "email_verified": True,
+        "given_name": "GitHub",
+        "family_name": "User",
+        "lastname": "User",
+        "picture": "https://example.com/github-pic.jpg",
+    }
+
+    async def mock_verify(token):
+        return mock_info
+
+    async def mock_fetch(token):
+        return mock_info
+
+    monkeypatch.setattr("src.api.auth.github_service.verify_github_token", mock_verify)
+    monkeypatch.setattr("src.api.auth.github_service.fetch_github_userinfo", mock_fetch)
+
+    resp = await auth_client.post("/api/auth/github", json={"githubToken": "fake-github-token"})
+    assert resp.status_code in (200, 201)
+    data = resp.json()
+    assert data["access_token"]
+    assert data["refresh_token"]
+
+    token = data["access_token"]
+    profile_resp = await auth_client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert profile_resp.status_code == 200
+    profile = profile_resp.json()
+    assert profile["email"] == "github@example.com"
+    assert profile["provider"] == "github"
+
+
+# ---------------------------------------------------------------------------
+# Apple login
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_apple_invalid_token(auth_client):
+    resp = await auth_client.post("/api/auth/apple", json={"appleToken": "invalid-token"})
+    assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_apple_missing_token(auth_client):
+    resp = await auth_client.post("/api/auth/apple", json={})
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_apple_valid_token(auth_client, monkeypatch):
+    mock_info = {
+        "sub": "apple-user-789",
+        "email": "apple@example.com",
+        "email_verified": True,
+        "given_name": None,
+        "family_name": None,
+        "lastname": None,
+        "picture": None,
+    }
+
+    async def mock_verify(token):
+        return mock_info
+
+    async def mock_fetch(token):
+        return mock_info
+
+    monkeypatch.setattr("src.api.auth.apple_service.verify_apple_token", mock_verify)
+    monkeypatch.setattr("src.api.auth.apple_service.fetch_apple_userinfo", mock_fetch)
+
+    resp = await auth_client.post(
+        "/api/auth/apple",
+        json={"appleToken": "fake-apple-token", "name": "Apple", "lastname": "User"},
+    )
+    assert resp.status_code in (200, 201)
+    data = resp.json()
+    assert data["access_token"]
+    assert data["refresh_token"]
+
+    token = data["access_token"]
+    profile_resp = await auth_client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert profile_resp.status_code == 200
+    profile = profile_resp.json()
+    assert profile["email"] == "apple@example.com"
+    assert profile["name"] == "Apple"
+    assert profile["provider"] == "apple"

@@ -14,7 +14,7 @@ from ...core.logger import logger
 from ...core.security import create_access_token, generate_refresh_token, get_password_hash, verify_password
 from ...models import User, UserIdentity
 from ...schemas.auth_dtos import UserLogin, UserProfile, UserRegister
-from . import google_service
+from . import google_service, github_service, apple_service
 from .repository import AuthProviderRepository, UserIdentityRepository, UserRepository, UserRoleRepository, UserSessionRepository, UserStatusRepository
 
 
@@ -99,6 +99,117 @@ class AuthService:
           email=info.get("email"),
           is_primary=True,
         )
+
+    if user is None or not user.can_authenticate():
+      raise ForbiddenError("Account disabled")
+
+    return await self._issue_tokens(user.id)
+
+  async def github_login(self, github_token: str) -> dict:
+    info = await github_service.verify_github_token(github_token)
+    if not info:
+      logger.warning("GitHub login fallido: token inválido")
+      raise UnauthorizedError("Invalid GitHub token")
+
+    provider = await AuthProviderRepository(self.db).get_by_name("github")
+    if provider is None:
+      raise RuntimeError("Seed faltante: no existe el auth_provider 'github'")
+    if not provider.is_active:
+      raise ForbiddenError("GitHub login is disabled")
+
+    # Find existing identity by (provider, provider_user_id)
+    result = await self.db.execute(
+      select(UserIdentity).where(
+        UserIdentity.provider_id == provider.id,
+        UserIdentity.provider_user_id == info["sub"],
+      )
+    )
+    identity = result.scalar_one_or_none()
+
+    if identity is not None:
+      user = await self.db.get(User, identity.user_id)
+      if user is not None:
+        user.email = info.get("email") or user.email
+        user.name = info.get("given_name") or user.name
+        user.lastname = info.get("lastname") or user.lastname
+        user.picture_url = info.get("picture") or user.picture_url
+        user.email_verified = info.get("email_verified", user.email_verified)
+        await self.db.flush()
+    else:
+      repo = UserRepository(self.db)
+      user = await repo.create(
+        email=info.get("email"),
+        password_hash=None,
+        email_verified=info.get("email_verified", True),
+        name=info.get("given_name"),
+        lastname=info.get("lastname"),
+        picture_url=info.get("picture"),
+      )
+      id_repo = UserIdentityRepository(self.db)
+      await id_repo.create(
+        user_id=user.id,
+        provider_id=provider.id,
+        provider_user_id=info["sub"],
+        email=info.get("email"),
+        is_primary=True,
+      )
+
+    if user is None or not user.can_authenticate():
+      raise ForbiddenError("Account disabled")
+
+    return await self._issue_tokens(user.id)
+
+  async def apple_login(self, apple_token: str, name: str | None = None, lastname: str | None = None) -> dict:
+    info = await apple_service.verify_apple_token(apple_token)
+    if not info:
+      logger.warning("Apple login fallido: token inválido")
+      raise UnauthorizedError("Invalid Apple token")
+
+    # Apple solo envía el nombre en el primer login (vía parámetro "user" del frontend)
+    given_name = name or info.get("given_name")
+    family_name = lastname or info.get("lastname")
+
+    provider = await AuthProviderRepository(self.db).get_by_name("apple")
+    if provider is None:
+      raise RuntimeError("Seed faltante: no existe el auth_provider 'apple'")
+    if not provider.is_active:
+      raise ForbiddenError("Apple login is disabled")
+
+    # Find existing identity by (provider, provider_user_id)
+    result = await self.db.execute(
+      select(UserIdentity).where(
+        UserIdentity.provider_id == provider.id,
+        UserIdentity.provider_user_id == info["sub"],
+      )
+    )
+    identity = result.scalar_one_or_none()
+
+    if identity is not None:
+      user = await self.db.get(User, identity.user_id)
+      if user is not None:
+        user.email = info.get("email") or user.email
+        user.name = given_name or user.name
+        user.lastname = family_name or user.lastname
+        user.email_verified = info.get("email_verified", user.email_verified)
+        await self.db.flush()
+    else:
+      repo = UserRepository(self.db)
+      user = await repo.create(
+        email=info.get("email"),
+        password_hash=None,
+        email_verified=info.get("email_verified", True),
+        name=given_name,
+        lastname=family_name,
+        picture_url=None,
+      )
+      id_repo = UserIdentityRepository(self.db)
+      await id_repo.create(
+        user_id=user.id,
+        provider_id=provider.id,
+        provider_user_id=info["sub"],
+        email=info.get("email"),
+        is_primary=True,
+      )
 
     if user is None or not user.can_authenticate():
       raise ForbiddenError("Account disabled")

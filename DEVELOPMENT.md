@@ -30,7 +30,7 @@ API FastAPI por feature. Cada feature vive en `src/api/<feature>/` y expone `rou
 - **Service:** orquesta el negocio (errores, imágenes, paginación). Lanza `NotFoundError`; nunca devuelve `None` para "no encontrado".
 - **Entidades:** prefijo `pf_*` y columnas `id_<tabla>`; las tablas de auth (`users`, `user_roles`, `user_status`, `auth_providers`, `user_identities`, `user_sessions`) viven aparte, en `postgre_auth.sql`.
 - **API:** los routers se montan bajo `/api`; los estáticos, bajo `/static`.
-- **Auth:** `routes → service → repository`, con `google_service` validando el token de Google. Toda la API exige `X-API-Key` a nivel de router; solo `/health` y `/docs` quedan fuera.
+- **Auth:** `routes → service → repository`, con `google_service`, `github_service` y `apple_service` validando tokens. Toda la API exige `X-API-Key` a nivel de router; solo `/health` y `/docs` quedan fuera.
 - **Errores:** RFC 9457 (`fastapi-problem` + `rfc9457`) para respuestas uniformes.
 
 ## Decisiones
@@ -41,25 +41,26 @@ API FastAPI por feature. Cada feature vive en `src/api/<feature>/` y expone `rou
 | Aceptado | El repository es la única capa que hace commit; las relaciones M:N de `project` se resuelven en un único commit. | Evita commits parciales y dependencias cruzadas entre features. |
 | Aceptado | Errores de dominio con RFC 9457. | Respuestas uniformes y cliente predecible. |
 | Aceptado | Imágenes en Cloudinary; la BD guarda solo la URL. | Evita binarios en la base y simplifica el borrado idempotente. |
-| Aceptado | Auth con Google OAuth + JWT: access token de 15 min, refresh rotativo de 1 día, revocación y detección de reuso en `user_sessions`. Roles `admin` y `user` en `user_roles`. | Sesión sin guardar contraseñas; el refresh rotativo limita el uso de un token robado. |
-| Aceptado | `google_service` valida `aud` contra `GOOGLE_CLIENT_ID` y `email_verified`; acepta `id_token` (JWT) o `access_token` opaco. | Un token emitido para otra app no debe crear sesión. |
-| Aceptado | Todos los recursos (`project`, `language`, `technology`, `url`, `url-grp`): solo `GET /` (listado completo) es público (solo `verify_api_key`); `GET /pagination`, `GET /{id}` y toda escritura exigen `require_admin`. | El HOME consume `GET /` de project y `GET /detail` de url-grp; el admin usa paginación y detalle. |
-| Aceptado | El rol `admin` se asigna manualmente en la BD (`user_roles`/`users`); los usuarios nuevos reciben `user` por defecto. | Sin hacks de asignación automática; el admin de sistema gestiona los roles. |
+| Aceptado | Auth con Google OAuth + JWT: access 15 min, refresh rotativo 1 día, revocación y detección de reuso en `user_sessions`. Roles `admin` y `user`. | Refresh rotativo limita el uso de un token robado. |
+| Aceptado | `google_service` valida `aud` y `email_verified`; acepta `id_token` o `access_token` opaco. | Token de otra app no crea sesión. |
+| Aceptado | `github_service` verifica el access_token contra `https://api.github.com/user`; obtiene email de `/user/emails` si es privado. | Sigue el patrón de google_service. |
+| Aceptado | `apple_service` verifica el identity token (JWT RS256) contra Apple JWKS; valida `iss`, `aud` y `exp`. | Apple solo envía el nombre en el primer login (vía parámetro). |
+| Aceptado | Todos los recursos: solo `GET /` es público (solo `verify_api_key`); `GET /pagination`, `GET /{id}` y toda escritura exigen `require_admin`. | El HOME consume `GET /` de project y `GET /detail` de url-grp. |
+| Aceptado | El rol `admin` se asigna manualmente en la BD; los usuarios nuevos reciben `user` por defecto. | Sin hacks de asignación automática. |
 | Aceptado | Tests con `pytest`; los casos `@pytest.mark.live` se excluyen por defecto. | Los tests base no dependen de servicios externos reales. |
-| Aceptado | Contrato de auth alineado con `portfolio-angular`: la API devuelve `{access_token, refresh_token, token_type, expires_in}` y el BFF (cookies HttpOnly) consume `access_token`. `/auth/me` devuelve `UserProfile`. | El BFF gestiona la sesión; el front no accede a los tokens. |
+| Aceptado | Contrato de auth alineado: la API devuelve `{access_token, ...}` y el BFF (cookies HttpOnly) consume `access_token`. `/auth/me` devuelve `UserProfile`. | El BFF gestiona la sesión. |
 
 ## Estado
 
 - API activa con los routers `language`, `technology`, `project`, `url`, `url-grp` y `auth` montados bajo `/api`.
-- 81 tests en `tests/` (62 originales + 19 de auth). Todos pasan.
+- 87 tests en `tests/` (62 originales + 25 de auth). Todos pasan.
 - [ ] Confirmar si el error 400 de `POST /api/project` sigue vigente y cuál es su causa.
 
 ## Pendientes
 
-- **Tests de auth:** 19 tests en `tests/test_auth.py` (register, login, me, refresh, logout, google, api key, validación). Cobertura de refresh rotation y reuse detection.
-- **GitHub y Apple:** `config.py` y `.env.example` declaran credenciales, pero no hay validación de esos proveedores.
+- **Tests de auth:** 25 tests en `tests/test_auth.py` (register, login, me, refresh, logout, google, github, apple, api key, validación). Cobertura de refresh rotation y reuse detection.
+- **GitHub y Apple:** implementados (`github_service.py`, `apple_service.py`). Endpoints `POST /api/auth/github` y `POST /api/auth/apple`. 6 tests.
 - **Error 400 en `POST /api/project`:** aparcado; no crítico por ahora.
-- **Tests de escritura:** los tests existentes usan `override_verify_api_key` pero no overridean `require_admin`; hay que añadir el override en los casos de escritura.
 
 ## Problemas conocidos
 

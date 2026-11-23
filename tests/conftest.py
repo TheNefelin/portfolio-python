@@ -72,7 +72,7 @@ async def _seed_auth(session: AsyncSession):
     if existing is None:
       session.add(UserStatus(name=name))
   # Providers
-  for name, display, active in [("local", "Email + Contrasena", True), ("google", "Google", True), ("github", "GitHub", False), ("apple", "Apple ID", False)]:
+  for name, display, active in [("local", "Email + Contrasena", True), ("google", "Google", True), ("github", "GitHub", True), ("apple", "Apple ID", True)]:
     existing = (await session.execute(select(AuthProvider).where(AuthProvider.name == name))).scalar_one_or_none()
     if existing is None:
       session.add(AuthProvider(name=name, display_name=display, is_active=active))
