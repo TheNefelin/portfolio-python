@@ -59,7 +59,7 @@ API FastAPI por feature. Cada feature vive en `src/api/<feature>/` y expone `rou
 ## Pendientes
 
 - **Tests de auth:** 25 tests en `tests/test_auth.py` (register, login, me, refresh, logout, google, github, apple, api key, validación). Cobertura de refresh rotation y reuse detection.
-- **GitHub y Apple:** implementados (`github_service.py`, `apple_service.py`). Endpoints `POST /api/auth/github` y `POST /api/auth/apple`. 6 tests.
+- **GitHub y Apple:** implementados (`github_service.py`, `apple_service.py`). Endpoints `/auth/github` y `/auth/apple`. 6 tests. GitHub activo, Apple inactivo ($99/año).
 - **Error 400 en `POST /api/project`:** aparcado; no crítico por ahora.
 
 ## Problemas conocidos

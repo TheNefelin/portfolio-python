@@ -172,5 +172,5 @@ INSERT INTO auth_providers (name, display_name, is_active) VALUES
   ('local',  'Email + Contrasena', TRUE),
   ('google', 'Google', TRUE),
   ('github', 'GitHub', TRUE),
-  ('apple',  'Apple ID', TRUE)
+  ('apple',  'Apple ID', FALSE)
 ON CONFLICT (name) DO NOTHING;
