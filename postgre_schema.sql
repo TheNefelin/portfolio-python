@@ -84,18 +84,18 @@ CREATE TABLE IF NOT EXISTS pf_url (
         REFERENCES pf_urlgrp(id_urlgrp) ON DELETE RESTRICT
 );
 
-CREATE INDEX ix_urlgrp_name ON pf_urlgrp(name);
-CREATE INDEX ix_urlgrp_is_enabled ON pf_urlgrp(is_enabled);
-CREATE INDEX ix_url_name ON pf_url(name);
-CREATE INDEX ix_url_is_enabled ON pf_url(is_enabled);
-CREATE INDEX ix_url_id_urlgrp ON pf_url(id_urlgrp);
-CREATE INDEX ix_languages_name ON pf_languages(name);
-CREATE INDEX ix_technologies_name ON pf_technologies(name);
-CREATE INDEX ix_projects_name ON pf_projects(name);
-CREATE INDEX ix_projects_is_enabled ON pf_projects(is_enabled);
-CREATE INDEX ix_pro_lang_id_project ON pf_pro_lang(id_project);
-CREATE INDEX ix_pro_lang_id_language ON pf_pro_lang(id_language);
-CREATE INDEX ix_pro_tech_id_project ON pf_pro_tech(id_project);
-CREATE INDEX ix_pro_tech_id_technology ON pf_pro_tech(id_technology);
+CREATE INDEX IF NOT EXISTS ix_urlgrp_name ON pf_urlgrp(name);
+CREATE INDEX IF NOT EXISTS ix_urlgrp_is_enabled ON pf_urlgrp(is_enabled);
+CREATE INDEX IF NOT EXISTS ix_url_name ON pf_url(name);
+CREATE INDEX IF NOT EXISTS ix_url_is_enabled ON pf_url(is_enabled);
+CREATE INDEX IF NOT EXISTS ix_url_id_urlgrp ON pf_url(id_urlgrp);
+CREATE INDEX IF NOT EXISTS ix_languages_name ON pf_languages(name);
+CREATE INDEX IF NOT EXISTS ix_technologies_name ON pf_technologies(name);
+CREATE INDEX IF NOT EXISTS ix_projects_name ON pf_projects(name);
+CREATE INDEX IF NOT EXISTS ix_projects_is_enabled ON pf_projects(is_enabled);
+CREATE INDEX IF NOT EXISTS ix_pro_lang_id_project ON pf_pro_lang(id_project);
+CREATE INDEX IF NOT EXISTS ix_pro_lang_id_language ON pf_pro_lang(id_language);
+CREATE INDEX IF NOT EXISTS ix_pro_tech_id_project ON pf_pro_tech(id_project);
+CREATE INDEX IF NOT EXISTS ix_pro_tech_id_technology ON pf_pro_tech(id_technology);
 
 COMMIT;

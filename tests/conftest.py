@@ -50,7 +50,7 @@ async def setup_db():
         await conn.run_sync(Base.metadata.create_all)
         await conn.run_sync(AuthBase.metadata.create_all)
     yield
-    # Sin teardown destructivo: la BD de tests se resetea al inicio.
+    # Sin teardown destructivo: la BD de tests se resetea con repopulate_db.py.
 
 
 @pytest.fixture
