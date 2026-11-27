@@ -175,9 +175,11 @@ class MFA(Base):
   __tablename__ = "user_mfa"
 
   id: Mapped[uuid.UUID] = mapped_column(
-      Uuid(as_uuid=True), primary_key=True, default=func.gen_random_uuid()
+    Uuid(as_uuid=True), primary_key=True, default=func.gen_random_uuid()
   )
-  user_id: Mapped[int] = mapped_column(Integer, nullable=False)
+  user_id: Mapped[uuid.UUID] = mapped_column(
+    ForeignKey("users.id", ondelete="RESTRICT"), nullable=False
+  )
   secret: Mapped[str] = Column(String(255), nullable=False)  # Base32 secret (cifrado en reposo)
   is_enabled: Mapped[bool] = Column(Boolean, nullable=False, default=False)
   enabled_at: Mapped[datetime | None] = Column(DateTime(timezone=True), nullable=True)
@@ -194,9 +196,11 @@ class RecoveryCode(Base):
   __tablename__ = "user_recovery_codes"
 
   id: Mapped[uuid.UUID] = mapped_column(
-      Uuid(as_uuid=True), primary_key=True, default=func.gen_random_uuid()
+    Uuid(as_uuid=True), primary_key=True, default=func.gen_random_uuid()
   )
-  user_id: Mapped[int] = mapped_column(Integer, nullable=False)
+  user_id: Mapped[uuid.UUID] = mapped_column(
+    ForeignKey("users.id", ondelete="RESTRICT"), nullable=False
+  )
   code_hash: Mapped[str] = Column(String(255), nullable=False)  # Hash del código (nunca en texto plano)
   used_at: Mapped[datetime | None] = Column(DateTime(timezone=True), nullable=True)
   created_at: Mapped[datetime] = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

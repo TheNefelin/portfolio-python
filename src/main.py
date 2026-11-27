@@ -1,6 +1,7 @@
 import os
 import time
 import uuid
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,12 +18,26 @@ from src.api.technology.routes import router as technology_router
 from src.api.url.routes import router as url_router
 from src.api.url_grp.routes import router as urlgrp_router
 from src.core.config import settings
+from src.core.database import get_db, AsyncSessionLocal
 from src.core.limiter import limiter
 from src.core.logger import logger, set_request_id
+from src.core.startup import validate_roles
 
 start_time = time.time()
 
-app = FastAPI(title="Portfolio API", description="In production", version="1.1")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+  # Startup: validate contracts (roles, etc.)
+  async with AsyncSessionLocal() as db:
+    await validate_roles(db)
+    await db.commit()
+  logger.info("Startup validation passed")
+  yield
+  # Shutdown: nothing to clean up
+
+
+app = FastAPI(title="Portfolio API", description="In production", version="1.1", lifespan=lifespan)
 app.state.limiter = limiter
 
 
