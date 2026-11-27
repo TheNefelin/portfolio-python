@@ -1,8 +1,8 @@
 {
     "schemaVersion":  1,
-    "baselineVersion":  "0.6.0",
+    "baselineVersion":  "0.6.1",
     "mode":  "local",
-    "installedAt":  "2026-11-27T17:29:51.2787667-03:00",
+    "installedAt":  "2026-11-27T18:08:21.7594222-03:00",
     "skills":  [
                    "memoria",
                    "fastapi",
@@ -28,13 +28,13 @@
                   ".baseline/skills/fastapi/references/errores-rfc9457.md":  "A40DFE4F79CC0EC5FC4900C6EDA3CA63FA87AA606294F219AC0E43D7D57B7003",
                   ".baseline/skills/fastapi/references/modelos.md":  "0D30063C30A1BDE4A8C3C162E5CAC8118B58244C8DEC2F958AC7854BB6D9E2B5",
                   ".baseline/skills/fastapi/references/rate-limiting.md":  "C90F0F6E2B56F00D2A60653DD8375AA1E1AB0F0258745771C90AF8DA5F5D71AB",
-                  ".baseline/skills/fastapi/references/tests.md":  "D1952822466EC04916CAAACE7969D03A51D62A718E733A8A7A85334C916EA87B",
+                  ".baseline/skills/fastapi/references/tests.md":  "F0223F06DAC4B6E6E92CCC25B870D4121864F0A5AF6C73C72E354C9EE4FEABB1",
                   ".baseline/skills/fastapi/references/uploads.md":  "49E3C4AAD53D4287DEBB957006D998B01D4B36A9995D6CC45590FFA423700C4E",
                   ".baseline/skills/fastapi/SKILL.md":  "07694D55AA8F90063288198D257A9FB73E1E456CDD0676190202C656E46724EE",
                   ".baseline/skills/memoria/SKILL.md":  "929E9B06B577A7CF71021C0EED501EBF35627BAE11DDB5E9A9EE946FF8D4D1D4",
                   ".baseline/skills/sql/references/postgresql.md":  "05C3AE56E96C2EA15A34A8F4EEE531627D7FE8F95253BEC7DD5339D0007E3EF1",
                   ".baseline/skills/sql/references/sqlserver.md":  "3449E00C46571D958871EC60CBAE4D1AEE2D026F8BCA3B36A249BF7B87826629",
                   ".baseline/skills/sql/SKILL.md":  "369582F6F359FA5FA75A8407C63E874DF0B62D2388B6B0C90C1FDD5F47C027E8",
-                  ".baseline/VERSION":  "29EF1BE9A3A40608EE71E155EB871CA34630E23BEEE9AF29441ABA9D0EA76D54"
+                  ".baseline/VERSION":  "14848C5F87427AE54B00BF9EB86BFD3FB6288E611D3AF1D7739EE09050CD46DF"
               }
 }

@@ -64,7 +64,7 @@ async def _clean_tables(session: AsyncSession):
     await session.commit()
 ```
 
-**Regla**: `TRUNCATE` solo las tablas del proyecto (con `RESTART IDENTITY CASCADE` para resetear secuencias). **Nunca** `DROP SCHEMA`, `TRUNCATE` sin lista, ni `drop_all` sobre la BD.
+**Regla absoluta**: Los tests **NUNCA** crean, modifican ni eliminan tablas, esquemas ni BD. Los tests solo ejecutan tests. La limpieza entre tests es `TRUNCATE` de las tablas del proyecto (con `RESTART IDENTITY CASCADE`), definidas en `postgre_schema.sql`. **Nunca** `DROP SCHEMA`, `TRUNCATE` sin lista, ni `drop_all`. La gestión de tablas/BD es exclusiva de los archivos `.sql` y de `repopulate_db.py` (herramienta del desarrollador, no de tests).
 
 ### `tests/conftest.py`
 
@@ -130,7 +130,7 @@ async def _clean_tables(session: AsyncSession):
 @pytest.fixture(scope="module")
 async def setup_db():
     # Aplica el DDL real del proyecto (postgre_schema.sql, idempotente).
-    # NO hace DROP SCHEMA. La BD de tests es dedicada y desechable.
+    # NO hace DROP SCHEMA ni crea/elimina BD. La BD de tests es dedicada.
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
@@ -188,56 +188,19 @@ async def test_create_product_duplicate_name(client, db):
     assert "already exists" in response.json()["detail"]
 ```
 
-**Flujo de trabajo**: `pytest` corre contra `TEST_DATABASE_URL` (BD dedicada `*_test`). Los tests limpian **solo las tablas del proyecto** (TRUNCATE con lista explícita). **Nunca** DROP SCHEMA, TRUNCATE sin lista, ni drop_all. El rol de tests **no debe tener permisos de DDL/DROP** sobre producción. Para repoblar la BD de desarrollo usa `repopulate_db.py --force`; el seed debe ser idempotente (FKs por natural keys, no IDs en duro).
+**Flujo de trabajo**: `pytest` corre contra `TEST_DATABASE_URL` (BD dedicada `*_test`). Los tests limpian **solo las tablas del proyecto** (TRUNCATE con lista explícita). **Nunca** DROP SCHEMA, TRUNCATE sin lista, ni drop_all. El rol de tests **no debe tener permisos de DDL/DROP** sobre producción. Para repoblar la BD de desarrollo usa `repopulate_db.py`; el seed debe ser idempotente (FKs por natural keys, no IDs en duro).
 
 ---
 
-### Mocks y binding de imports (gotcha)
+### Archivos .sql (gestión de tablas)
 
-Normalizar imports (subir a nivel de módulo las importaciones que estaban dentro de funciones) es buena higiene, pero **rompe los mocks que parchean el módulo fuente**:
+Todo proyecto backend con BD debe incluir al menos:
 
-```python
-# service.py
-from .google_service import verify_google_token   # liga el objeto al namespace de service
+| Archivo | Obligatorio | Contenido |
+|---|---|---|
+| postgre_schema.sql | Sí | DDL: CREATE TABLE IF NOT EXISTS + índices + constraints |
+| postgre_seed.sql | Sí | Seeds idempotentes (ON CONFLICT / WHERE NOT EXISTS) |
+| postgre_auth.sql | Opcional | Datos de auth (roles, usuarios iniciales) |
 
-# tests
-with patch("src.api.auth.google_service.verify_google_token", ...):  # NO intercepta:
-    ...  # service ya tiene su propia referencia al objeto original
-```
-
-El test no falla con error: ejecuta el código real (p. ej. llama a Google) y devuelve el resultado de verdad, lo que suele manifestarse como un 401 o un timeout. **La forma correcta** es importar el módulo y resolver el atributo en tiempo de llamada:
-
-```python
-from . import google_service
-
-info = await google_service.verify_google_token(token)  # el patch sí intercepta
-```
-
-Misma trampa con `patch("src.core.security.hash_refresh_token")` si el repository importó la función: importa el módulo.
-
-### Gotcha de `pytest -q`
-
-`pytest.ini` del proyecto suele traer `addopts = -m "not live"` (o `-q`). Pasar `-q` otra vez lo convierte en `-qq` y **oculta la línea final "N passed"**, que es la que se reporta. Corre `python -m pytest` a secas para verla.
-
-### Desactivar el rate limit en tests
-
-`limiter.enabled = False` a nivel de módulo (no solo `limiter.reset()`): el límite por IP comparte cuota entre tests y produce 429 espurios. Reactiva el limiter solo en un test dedicado que verifique el 429.
-
-### Test de contrato de la API Key
-
-Parametriza **todas** las rutas del router y asserta 401 con `type == "invalid-api-key"`. Envía un body **válido** a propósito: con un body vacío el 422 de validación enmascara el fallo de la API Key (falso positivo real).
-
-### Repoblar la BD de desarrollo (seed idempotente)
-
-Un script `repopulate_db.py` que aplica el DDL + seed sobre la BD de desarrollo, con `--force` (drop + recreate) y `--test` (usa `TEST_DATABASE_URL`):
-
-```python
-# repopulate_db.py
-parser.add_argument("--force", action="store_true", help="Drop and recreate the DB first.")
-parser.add_argument("--test", action="store_true", help="Use TEST_DATABASE_URL instead of DATABASE_URL.")
-```
-
-- El seed debe ser **idempotente**: FKs por natural keys (no IDs en duro), `ON CONFLICT` o `INSERT ... WHERE NOT EXISTS`.
-- `--force` termina las conexiones activas (`pg_terminate_backend`) antes de `DROP DATABASE`.
-- El DDL y el seed viven en archivos `.sql` versionados (`postgre_schema.sql`, `postgre_seed.sql`, `postgre_auth.sql`), no en código Python.
-- Para tests: el fixture aplica el mismo `.sql` (idempotente) y hace rollback por test — no toca la BD de desarrollo.
+Estos archivos son la **fuente de verdad** de qué tablas pertenecen al proyecto.
+Los tests usan esta lista para saber qué limpiar. **Nunca** se eliminan ni crean BD ni tablas desde los tests ni desde scripts automatizados. Si se necesita empezar de cero, el desarrollador lo hace manualmente.
