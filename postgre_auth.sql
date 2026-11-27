@@ -14,13 +14,13 @@
 --       La BD solo almacena: name, display_name, is_active (datos de negocio).
 -- ============================================================
 
---DROP TABLE User_identities;
---DROP TABLE User_mfa;
---DROP TABLE User_recovery_codes;
---DROP TABLE User_Sessions;
---DROP TABLE Users;
---DROP TABLE User_roles;
---DROP TABLE User_Status;
+DROP TABLE User_identities;
+DROP TABLE User_mfa;
+DROP TABLE User_recovery_codes;
+DROP TABLE User_Sessions;
+DROP TABLE Users;
+DROP TABLE User_roles;
+DROP TABLE User_Status;
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
