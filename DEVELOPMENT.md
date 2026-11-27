@@ -25,6 +25,8 @@
 
 API FastAPI por feature. Cada feature vive en `src/api/<feature>/` y expone `routes.py`, `service.py` y `repository.py`.
 
+**Estilo de código:** indentación de 2 espacios (no 4). Todos los archivos `.py` del proyecto usan 2 espacios. Verificar con `grep -P '^\t'` o inspeccionar un archivo existente antes de escribir uno nuevo.
+
 - **Flujo:** `routes → service → repository`.
 - **Repository:** única capa que conoce SQLAlchemy y la única que hace commit.
 - **Service:** orquesta el negocio (errores, imágenes, paginación). Lanza `NotFoundError`; nunca devuelve `None` para "no encontrado".
