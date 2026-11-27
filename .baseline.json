@@ -1,8 +1,8 @@
 {
     "schemaVersion":  1,
-    "baselineVersion":  "0.6.1",
+    "baselineVersion":  "0.6.2",
     "mode":  "local",
-    "installedAt":  "2026-11-27T18:08:21.7594222-03:00",
+    "installedAt":  "2026-11-27T19:25:32.7415102-03:00",
     "skills":  [
                    "memoria",
                    "fastapi",
@@ -30,11 +30,11 @@
                   ".baseline/skills/fastapi/references/rate-limiting.md":  "C90F0F6E2B56F00D2A60653DD8375AA1E1AB0F0258745771C90AF8DA5F5D71AB",
                   ".baseline/skills/fastapi/references/tests.md":  "F0223F06DAC4B6E6E92CCC25B870D4121864F0A5AF6C73C72E354C9EE4FEABB1",
                   ".baseline/skills/fastapi/references/uploads.md":  "49E3C4AAD53D4287DEBB957006D998B01D4B36A9995D6CC45590FFA423700C4E",
-                  ".baseline/skills/fastapi/SKILL.md":  "07694D55AA8F90063288198D257A9FB73E1E456CDD0676190202C656E46724EE",
+                  ".baseline/skills/fastapi/SKILL.md":  "98EDC4A72723DB4749D8FE61FF0FC7F6C902DD45771788C938F59234C6468119",
                   ".baseline/skills/memoria/SKILL.md":  "929E9B06B577A7CF71021C0EED501EBF35627BAE11DDB5E9A9EE946FF8D4D1D4",
                   ".baseline/skills/sql/references/postgresql.md":  "05C3AE56E96C2EA15A34A8F4EEE531627D7FE8F95253BEC7DD5339D0007E3EF1",
                   ".baseline/skills/sql/references/sqlserver.md":  "3449E00C46571D958871EC60CBAE4D1AEE2D026F8BCA3B36A249BF7B87826629",
                   ".baseline/skills/sql/SKILL.md":  "369582F6F359FA5FA75A8407C63E874DF0B62D2388B6B0C90C1FDD5F47C027E8",
-                  ".baseline/VERSION":  "14848C5F87427AE54B00BF9EB86BFD3FB6288E611D3AF1D7739EE09050CD46DF"
+                  ".baseline/VERSION":  "276AC86581D06A6A2089DE6284A136FE303D490A711D879F275CC9A55F1CD807"
               }
 }
