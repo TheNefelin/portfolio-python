@@ -24,6 +24,7 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent
 SCHEMA_FILE = BASE_DIR / "postgre_schema.sql"
 SEED_FILE = BASE_DIR / "postgre_seed.sql"
+AUTH_SCHEMA_FILE = BASE_DIR / "postgre_auth.sql"
 
 
 def _normalize(url: str) -> str:
@@ -68,7 +69,7 @@ async def main() -> int:
     print("ERROR: DATABASE_URL is not defined in .env.", file=sys.stderr)
     return 1
   url = _normalize(url)
-  for file, label in ((SCHEMA_FILE, "schema"), (SEED_FILE, "seed")):
+  for file, label in ((SCHEMA_FILE, "schema"), (SEED_FILE, "seed"), (AUTH_SCHEMA_FILE, "auth schema")):
     if not file.exists():
       print(f"ERROR: {file.name} not found in {BASE_DIR}.", file=sys.stderr)
       return 1
@@ -79,6 +80,7 @@ async def main() -> int:
   conn = await asyncpg.connect(url)
   try:
     await _apply_file(conn, SCHEMA_FILE, "schema")
+    await _apply_file(conn, AUTH_SCHEMA_FILE, "auth schema")
     await _apply_file(conn, SEED_FILE, "seed")
   finally:
     await conn.close()

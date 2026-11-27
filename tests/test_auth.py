@@ -97,6 +97,38 @@ async def test_api_key_invalid(no_key_client):
     assert resp.status_code == 401
 
 
+# Contract test: ALL routes require X-API-Key (parametrized)
+API_KEY_ROUTES = [
+    ("GET", "/api/language/"),
+    ("GET", "/api/technology/"),
+    ("GET", "/api/project/"),
+    ("GET", "/api/url/"),
+    ("GET", "/api/url-grp/"),
+    ("GET", "/api/auth/me"),
+    ("POST", "/api/auth/login"),
+    ("POST", "/api/auth/register"),
+    ("POST", "/api/auth/google"),
+    ("POST", "/api/auth/github"),
+    ("POST", "/api/auth/apple"),
+    ("POST", "/api/auth/refresh"),
+    ("POST", "/api/auth/logout"),
+]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("method,path", API_KEY_ROUTES)
+async def test_api_key_required_on_all_routes(no_key_client, method, path):
+    """Every route returns 401 invalid-api-key when X-API-Key is missing.
+
+    Uses a valid body on purpose: an empty body would trigger a 422 validation
+    error that masks the missing API key (false positive).
+    """
+    kwargs = {"json": {"email": "a@b.com", "password": "password123"}} if method == "POST" else {}
+    resp = await no_key_client.request(method, path, **kwargs)
+    assert resp.status_code == 401
+    assert resp.json().get("type") == "invalid-api-key"
+
+
 # ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
