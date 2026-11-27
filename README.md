@@ -6,6 +6,24 @@
 .venv\Scripts\activate
 python repopulate_db.py   # puebla la BD (schema + seed) usando DATABASE_URL del .env
 python run.py
+
+### Flujo de tests
+```sh
+# 1. Preparar BD de tests (una vez o después de cambios en .sql)
+python repopulate_db.py --test
+
+# 2. Ejecutar tests
+python -m pytest tests/ -v
+
+# 3. Restaurar BD después de tests (los tests limpian tablas entre runs,
+#    al final la BD queda con solo datos mínimos)
+python repopulate_db.py --test
+```
+
+> Los tests limpian solo las tablas del proyecto (TRUNCATE con lista explícita).
+> Nunca DROP SCHEMA, TRUNCATE sin lista ni drop_all.
+> Los tests no crean ni eliminan tablas ni BD — solo ejecutan tests.
+> Los archivos .sql (schema + seed + auth) gestionan el esquema.
 # or 
 uvicorn src.main:app --reload
 ```
